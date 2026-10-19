@@ -1,0 +1,7 @@
+.build/
+dist/
+.obsidian/
+.DS_Store
+*.zip
+xcuserdata/
+*.xcuserstate
