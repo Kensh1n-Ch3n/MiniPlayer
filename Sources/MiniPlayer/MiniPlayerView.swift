@@ -8,6 +8,28 @@ enum MiniMetrics {
     static let shadowPadding: CGFloat = 8
     static let windowWidth = cardWidth + shadowPadding * 2
     static let windowHeight = cardHeight + shadowPadding * 2
+
+    static let miniCardWidth: CGFloat = 300
+    static let miniCardHeight: CGFloat = 56
+    static let miniCornerRadius: CGFloat = 28
+    static let miniWindowWidth = miniCardWidth + shadowPadding * 2
+    static let miniWindowHeight = miniCardHeight + shadowPadding * 2
+
+    static func cardSize(isMini: Bool) -> CGSize {
+        isMini
+            ? CGSize(width: miniCardWidth, height: miniCardHeight)
+            : CGSize(width: cardWidth, height: cardHeight)
+    }
+
+    static func cardCornerRadius(isMini: Bool) -> CGFloat {
+        isMini ? miniCornerRadius : cornerRadius
+    }
+
+    static func windowSize(isMini: Bool) -> CGSize {
+        isMini
+            ? CGSize(width: miniWindowWidth, height: miniWindowHeight)
+            : CGSize(width: windowWidth, height: windowHeight)
+    }
 }
 
 struct MiniPlayerView: View {
@@ -16,13 +38,18 @@ struct MiniPlayerView: View {
     @State private var hoveringProgress = false
     @State private var hoveringArtwork = false
 
+    private var isMini: Bool { model.isMiniMode }
+    private var cardCornerRadius: CGFloat { MiniMetrics.cardCornerRadius(isMini: isMini) }
+    private var cardSize: CGSize { MiniMetrics.cardSize(isMini: isMini) }
+    private var windowSize: CGSize { MiniMetrics.windowSize(isMini: isMini) }
+
     var body: some View {
         card
-            .frame(width: MiniMetrics.cardWidth, height: MiniMetrics.cardHeight)
-            .modifier(NativeGlassModifier(cornerRadius: MiniMetrics.cornerRadius))
-            .clipShape(RoundedRectangle(cornerRadius: MiniMetrics.cornerRadius, style: .continuous))
+            .frame(width: cardSize.width, height: cardSize.height)
+            .modifier(NativeGlassModifier(cornerRadius: cardCornerRadius))
+            .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: MiniMetrics.cornerRadius, style: .continuous)
+                RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                     .strokeBorder(
                         LinearGradient(
                             colors: [
@@ -37,7 +64,8 @@ struct MiniPlayerView: View {
                     )
             }
             .padding(MiniMetrics.shadowPadding)
-            .frame(width: MiniMetrics.windowWidth, height: MiniMetrics.windowHeight)
+            .frame(width: windowSize.width, height: windowSize.height)
+            .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isMini)
     }
 
     private var card: some View {
@@ -66,32 +94,126 @@ struct MiniPlayerView: View {
                 .blendMode(.plusLighter)
             }
 
-            VStack(spacing: 0) {
-                header
-                    .frame(height: 62)
-                Color.clear.frame(height: 14)
-                progressSection
-                    .frame(height: 14)
-                controls
-                    .frame(height: 50)
+            if isMini {
+                miniContent
+            } else {
+                fullContent
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 14)
         }
         .overlay(alignment: .top) {
-            WindowDragHandle()
-                .frame(width: 132, height: 28)
-                .padding(.top, 2)
+            if !isMini {
+                WindowDragHandle()
+                    .frame(width: 132, height: 28)
+                    .padding(.top, 2)
+            }
         }
         .overlay(alignment: .top) {
             Capsule()
                 .fill(Color.white.opacity(0.28))
-                .frame(width: MiniMetrics.cardWidth * 0.38, height: 1)
+                .frame(width: isMini ? 96 : MiniMetrics.cardWidth * 0.38, height: 1)
                 .blur(radius: 0.4)
                 .padding(.top, 0.5)
                 .allowsHitTesting(false)
         }
+        .overlay(alignment: .bottom) {
+            if isMini {
+                miniProgressLine
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 5)
+            }
+        }
+    }
+
+    private var fullContent: some View {
+        VStack(spacing: 0) {
+            header
+                .frame(height: 62)
+            Color.clear.frame(height: 14)
+            progressSection
+                .frame(height: 14)
+            controls
+                .frame(height: 50)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
+        .padding(.bottom, 14)
+    }
+
+    private var miniContent: some View {
+        HStack(spacing: 10) {
+            Button {
+                MiniPlayerPanelController.shared.hideAndOpenMusic()
+            } label: {
+                AlbumArtworkView(
+                    image: model.artwork,
+                    size: 34,
+                    cornerRadius: 17
+                )
+            }
+            .buttonStyle(.plain)
+            .help("打开 Apple Music")
+            .accessibilityLabel("打开 Apple Music")
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(model.displayTitle)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .shadow(color: .black.opacity(0.46), radius: 5, y: 1)
+
+                Text(model.displaySubtitle)
+                    .font(.system(size: 10, weight: .regular))
+                    .foregroundStyle(.white.opacity(0.72))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .shadow(color: .black.opacity(0.42), radius: 4, y: 1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .allowsHitTesting(false)
+
+            AudioBarsView(isPlaying: model.isPlaying)
+                .frame(width: 26, height: 18)
+                .opacity(0.82)
+
+            MiniPlayPauseButton(
+                isPlaying: model.isPlaying,
+                action: model.togglePlayPause
+            )
+
+            MiniModeButton(
+                systemName: "chevron.up",
+                help: "展开完整播放器",
+                action: model.toggleMiniMode
+            )
+        }
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(WindowDragHandle())
+    }
+
+    private var miniProgressLine: some View {
+        let duration = model.duration
+        let position = model.estimatedPosition()
+        let fraction: Double = duration > 0
+            ? min(1, max(0, position / duration))
+            : 0
+
+        return GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.white.opacity(0.16))
+
+                if fraction > 0 {
+                    Capsule()
+                        .fill(model.accentColor.opacity(0.9))
+                        .frame(width: proxy.size.width * fraction)
+                }
+            }
+        }
+        .frame(height: 2)
+        .opacity(model.hasTrack ? 1 : 0.45)
+        .allowsHitTesting(false)
     }
 
     // MARK: - Header
@@ -144,9 +266,17 @@ struct MiniPlayerView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            AudioBarsView(isPlaying: model.isPlaying)
-                .frame(width: 28, height: 24, alignment: .trailing)
-                .padding(.top, 1)
+            HStack(spacing: 6) {
+                AudioBarsView(isPlaying: model.isPlaying)
+                    .frame(width: 28, height: 24, alignment: .trailing)
+                    .padding(.top, 1)
+
+                MiniModeButton(
+                    systemName: "chevron.down",
+                    help: "收起为迷你模式",
+                    action: model.toggleMiniMode
+                )
+            }
         }
     }
 
@@ -302,10 +432,12 @@ struct MiniPlayerView: View {
 
 private struct AlbumArtworkView: View {
     let image: NSImage?
+    var size: CGFloat = 62
+    var cornerRadius: CGFloat = 12
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
+            RoundedRectangle(cornerRadius: cornerRadius + 1, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [Color.white.opacity(0.18), Color.white.opacity(0.06)],
@@ -324,10 +456,10 @@ private struct AlbumArtworkView: View {
                     .foregroundStyle(.white.opacity(0.48))
             }
         }
-        .frame(width: 62, height: 62)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.18), lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.22), radius: 7, y: 3)
@@ -413,3 +545,57 @@ private struct PlayPauseButton: View {
 }
 
 
+
+private struct MiniModeButton: View {
+    let systemName: String
+    let help: String
+    let action: () -> Void
+
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(Color.white.opacity(0.82))
+                .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
+                .frame(width: 24, height: 24)
+                .background(
+                    Circle()
+                        .fill(Color.white.opacity(hovering ? 0.14 : 0.02))
+                )
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.15), value: hovering)
+    }
+}
+
+private struct MiniPlayPauseButton: View {
+    let isPlaying: Bool
+    let action: () -> Void
+
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(0.96))
+                .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
+                .offset(x: isPlaying ? 0 : 0.8)
+                .frame(width: 30, height: 30)
+                .background(
+                    Circle()
+                        .fill(Color.white.opacity(hovering ? 0.14 : 0.02))
+                )
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help(isPlaying ? "暂停" : "播放")
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.15), value: hovering)
+    }
+}

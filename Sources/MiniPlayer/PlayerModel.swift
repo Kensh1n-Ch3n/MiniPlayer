@@ -14,6 +14,7 @@ final class PlayerModel: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var needsAutomationPermission = false
     @Published private(set) var panelVisible = true
+    @Published private(set) var isMiniMode = false
     @Published private(set) var lyricsVisible = false
     @Published private(set) var lyricsEditing = false
     @Published private(set) var lyricsOffset: Double = 0
@@ -30,6 +31,7 @@ final class PlayerModel: ObservableObject {
     private let defaults = UserDefaults.standard
 
     private init() {
+        isMiniMode = defaults.bool(forKey: "miniMode")
         lyricsVisible = defaults.bool(forKey: "lyricsVisible")
         // Offset 0 is meaningful now that we prefer real timed LRC files.
         // Reset the temporary +0.5s compensation once for existing installs.
@@ -340,6 +342,16 @@ final class PlayerModel: ObservableObject {
 
     func setPanelVisible(_ visible: Bool) {
         panelVisible = visible
+    }
+
+    func toggleMiniMode() {
+        setMiniMode(!isMiniMode)
+    }
+
+    func setMiniMode(_ mini: Bool) {
+        guard mini != isMiniMode else { return }
+        isMiniMode = mini
+        defaults.set(mini, forKey: "miniMode")
     }
 
     func toggleLyrics() {

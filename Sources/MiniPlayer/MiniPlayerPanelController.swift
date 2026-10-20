@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import CoreGraphics
 import SwiftUI
 
@@ -34,6 +35,7 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     private var autoHiddenForMusic = false
     private var musicLaunchGraceUntil: Date?
     private var musicMonitorTask: Task<Void, Never>?
+    private var miniModeCancellable: AnyCancellable?
 
     private override init() {
         super.init()
@@ -41,6 +43,7 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
 
     /// Called once at launch. The widget yields to a visible Music window.
     func start() {
+        observeMiniMode()
         ensureMusicMonitor()
         if musicHasVisibleWindow() {
             autoHiddenForMusic = true
@@ -91,6 +94,48 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
         hideWindow()
         PlayerModel.shared.openMusic()
         ensureMusicMonitor()
+    }
+
+    // MARK: - Mini mode
+
+    private func observeMiniMode() {
+        guard miniModeCancellable == nil else { return }
+        miniModeCancellable = PlayerModel.shared.$isMiniMode
+            .removeDuplicates()
+            .sink { [weak self] isMini in
+                self?.resizePanel(isMini: isMini, animated: true)
+            }
+    }
+
+    private func resizePanel(isMini: Bool, animated: Bool) {
+        guard let panel else { return }
+        let targetSize = MiniMetrics.windowSize(isMini: isMini)
+        guard abs(panel.frame.width - targetSize.width) > 0.5
+            || abs(panel.frame.height - targetSize.height) > 0.5 else { return }
+
+        let center = NSPoint(x: panel.frame.midX, y: panel.frame.midY)
+        var frame = NSRect(
+            x: center.x - targetSize.width / 2,
+            y: center.y - targetSize.height / 2,
+            width: targetSize.width,
+            height: targetSize.height
+        )
+        frame = panel.constrainFrameRect(frame, to: panel.screen ?? NSScreen.main)
+
+        guard animated, isVisible else {
+            panel.setFrame(frame, display: true)
+            panel.saveFrame(usingName: frameName)
+            return
+        }
+
+        let name = frameName
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.24
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            panel.animator().setFrame(frame, display: true)
+        } completionHandler: { [weak panel] in
+            panel?.saveFrame(usingName: name)
+        }
     }
 
     // MARK: - Music presence
@@ -165,12 +210,17 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
             positionAtDefaultCorner(panel)
         }
 
-        let targetSize = NSSize(width: MiniMetrics.windowWidth, height: MiniMetrics.windowHeight)
+        let targetSize = MiniMetrics.windowSize(isMini: PlayerModel.shared.isMiniMode)
         if abs(panel.frame.width - targetSize.width) > 0.5
             || abs(panel.frame.height - targetSize.height) > 0.5 {
+            let center = NSPoint(x: panel.frame.midX, y: panel.frame.midY)
             var frame = panel.frame
-            frame.origin.y = frame.maxY - targetSize.height
             frame.size = targetSize
+            frame.origin = NSPoint(
+                x: center.x - targetSize.width / 2,
+                y: center.y - targetSize.height / 2
+            )
+            frame = panel.constrainFrameRect(frame, to: panel.screen ?? NSScreen.main)
             panel.setFrame(frame, display: true)
         }
 
@@ -197,11 +247,12 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
             rootView: MiniPlayerView()
                 .environmentObject(PlayerModel.shared)
         )
+        let initialSize = MiniMetrics.windowSize(isMini: PlayerModel.shared.isMiniMode)
         content.frame = NSRect(
             x: 0,
             y: 0,
-            width: MiniMetrics.windowWidth,
-            height: MiniMetrics.windowHeight
+            width: initialSize.width,
+            height: initialSize.height
         )
         content.autoresizingMask = [.width, .height]
 
