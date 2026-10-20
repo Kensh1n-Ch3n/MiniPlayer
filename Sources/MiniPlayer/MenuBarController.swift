@@ -19,6 +19,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     private let desktopLyricsItem = NSMenuItem(title: "", action: nil, keyEquivalent: "l")
     private let menuBarLyricsItem = NSMenuItem(title: "在菜单栏显示歌词", action: nil, keyEquivalent: "")
     private let automationItem = NSMenuItem(title: "打开自动化权限设置…", action: nil, keyEquivalent: "")
+    private let openMusicItem = NSMenuItem(title: "打开 Apple Music", action: nil, keyEquivalent: "")
     private let currentOffsetItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let resetOffsetItem = NSMenuItem(title: "重置歌词偏移", action: nil, keyEquivalent: "")
     private var fontSizeItems: [NSMenuItem] = []
@@ -141,8 +142,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         automationItem.action = #selector(openAutomationSettings)
         menu.addItem(automationItem)
 
-        let openMusicItem = NSMenuItem(title: "打开 Apple Music", action: #selector(openMusic), keyEquivalent: "")
         openMusicItem.target = self
+        openMusicItem.action = #selector(openMusic)
         menu.addItem(openMusicItem)
         menu.addItem(.separator())
 
@@ -223,6 +224,9 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         miniModeItem.title = model.isMiniMode ? "展开完整播放器" : "收起为迷你模式"
         desktopLyricsItem.title = model.lyricsVisible ? "隐藏桌面歌词" : "显示桌面歌词"
         menuBarLyricsItem.state = model.lyricsInMenuBar ? .on : .off
+        openMusicItem.title = model.playbackSource == .netEaseMusic
+            ? "打开网易云音乐"
+            : "打开 Apple Music"
         automationItem.isHidden = !model.needsAutomationPermission
         currentOffsetItem.title = String(format: "当前偏移：%+.1f 秒", model.lyricsOffset)
         resetOffsetItem.isEnabled = abs(model.lyricsOffset) >= 0.001

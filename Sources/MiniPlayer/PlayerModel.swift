@@ -22,6 +22,7 @@ final class PlayerModel: ObservableObject {
     @Published private(set) var lyricsFontScale: Double = 1
     @Published private(set) var lyricsAtTop = false
     @Published private(set) var seekGeneration = 0
+    @Published private(set) var playbackSource: PlaybackSource = .appleMusic
 
     private var pollTask: Task<Void, Never>?
     private var artworkTask: Task<Void, Never>?
@@ -88,6 +89,18 @@ final class PlayerModel: ObservableObject {
         return !snapshot.isEmpty
     }
 
+    var canFavorite: Bool {
+        playbackSource == .appleMusic
+    }
+
+    var canSeek: Bool {
+        playbackSource == .appleMusic
+    }
+
+    var playerDisplayName: String {
+        playbackSource.displayName
+    }
+
     var displayTitle: String {
         guard let snapshot, !snapshot.isEmpty else { return "未在播放" }
         return snapshot.name
@@ -95,7 +108,7 @@ final class PlayerModel: ObservableObject {
 
     var displaySubtitle: String {
         guard let snapshot, !snapshot.isEmpty else {
-            return errorMessage ?? "打开 Apple Music 播放歌曲"
+            return errorMessage ?? "打开 \(playbackSource.displayName) 播放歌曲"
         }
         if !snapshot.artist.isEmpty { return snapshot.artist }
         if !snapshot.album.isEmpty { return snapshot.album }
@@ -149,15 +162,18 @@ final class PlayerModel: ObservableObject {
 
         let revision = stateRevision
         do {
-            let fresh = try await MusicService.snapshot()
+            let result = try await PlaybackService.fetch()
             // A control command may have been issued while the snapshot was
             // in flight. In that case this snapshot is stale and must not
             // overwrite the optimistic state.
             guard revision == stateRevision, pendingControls == 0 else { return }
             if errorMessage != nil { errorMessage = nil }
             if needsAutomationPermission { needsAutomationPermission = false }
+            if playbackSource != result.source {
+                playbackSource = result.source
+            }
 
-            guard let fresh else {
+            guard let fresh = result.snapshot else {
                 clearCurrentTrack()
                 return
             }
@@ -218,10 +234,11 @@ final class PlayerModel: ObservableObject {
         artwork = nil
         accentColor = .white
         let key = track.cacheKey
+        let source = playbackSource
 
         artworkTask = Task { [weak self] in
             guard let self else { return }
-            guard let url = await MusicService.fetchArtwork(for: key),
+            guard let url = await PlaybackService.artworkURL(for: track, source: source),
                   !Task.isCancelled,
                   self.currentKey == key,
                   let image = NSImage(contentsOf: url) else {
@@ -310,26 +327,30 @@ final class PlayerModel: ObservableObject {
         snapshot = snap
         snapshotDate = Date()
 
+        let source = playbackSource
         performControl {
-            try await MusicService.setPlayback(shouldPlay)
+            try await PlaybackService.setPlayback(shouldPlay, source: source)
         }
     }
 
     func nextTrack() {
         guard hasTrack else { return }
+        let source = playbackSource
         performControl {
-            try await MusicService.nextTrack()
+            try await PlaybackService.nextTrack(source: source)
         }
     }
 
     func previousTrack() {
         guard hasTrack else { return }
+        let source = playbackSource
         performControl {
-            try await MusicService.previousTrack()
+            try await PlaybackService.previousTrack(source: source)
         }
     }
 
     func seek(to position: TimeInterval) {
+        guard playbackSource == .appleMusic else { return }
         guard var snap = snapshot, !snap.isEmpty else { return }
         let target = min(max(0, position), snap.duration > 0 ? snap.duration : position)
         snap.position = target
@@ -337,28 +358,32 @@ final class PlayerModel: ObservableObject {
         snapshotDate = Date()
         seekGeneration += 1
 
+        let source = playbackSource
         performControl {
-            try await MusicService.seek(to: target)
+            try await PlaybackService.seek(to: target, source: source)
         }
     }
 
     func toggleFavorite() {
+        guard playbackSource == .appleMusic else { return }
         guard var snap = snapshot, !snap.isEmpty else { return }
         snap.favorited.toggle()
         snapshot = snap
 
+        let source = playbackSource
         performControl {
-            try await MusicService.setFavorited(snap.favorited)
+            try await PlaybackService.setFavorited(snap.favorited, source: source)
         }
     }
 
     func openMusic() {
-        let running = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Music")
+        let bundleIdentifier = playbackSource.bundleIdentifier
+        let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
         if let app = running.first {
             app.activate(options: [.activateAllWindows])
         }
 
-        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Music") else {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) else {
             return
         }
         let configuration = NSWorkspace.OpenConfiguration()

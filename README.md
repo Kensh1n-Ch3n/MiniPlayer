@@ -4,12 +4,12 @@
 
 # 音乐小窗 · MiniPlayer
 
-**给 macOS Apple Music 的悬浮播放器，加上刚刚好的桌面歌词和菜单栏歌词。**
+**给 macOS 的悬浮播放器，支持 Apple Music 和网易云音乐，带桌面歌词与菜单栏歌词。**
 
 [English](README.en.md) | 简体中文
 
 <p>
-  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.1.5-blueviolet?style=flat-square"></a>
+  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.2.0-blueviolet?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift">
   <img alt="Liquid Glass" src="https://img.shields.io/badge/UI-Liquid%20Glass-8A2BE2?style=flat-square">
@@ -36,6 +36,7 @@
 
 ## ✨ 功能
 
+- **双播放器来源**：支持 Apple Music 和网易云音乐。通过系统 Now Playing 自动识别当前播放器，切歌、暂停/播放、歌词和封面显示都会同步。
 - **原生 Liquid Glass**：macOS 26+ 使用 SwiftUI 原生 `.glassEffect(.clear, in:)`，由系统完成折射、模糊和边缘高光；macOS 14–15 回退到自定义虚化。
 - **迷你长条模式**：播放器右上角一键收起为 300×56 的胶囊长条，保留封面、歌曲名、上一首 / 播放 / 下一首、展开按钮和一条细进度线；点击封面会打开 Apple Music，悬停时封面会高亮并显示打开箭头。
 - **完整播放控制**：收藏、上一首、播放 / 暂停、下一首；进度条支持点击和拖动跳转。
@@ -84,16 +85,16 @@
 
 首次启动时系统会弹出：
 
-> 「MiniPlayer.app」想要控制「音乐.app」
+> 首次使用 Apple Music 时，系统会请求控制「音乐.app」
 
 请点 **允许**。如果误点「不允许」，可以在菜单栏音乐小窗里打开 **自动化权限设置…**，或手动前往：
 
-`系统设置 → 隐私与安全性 → 自动化 → 音乐小窗 → 音乐`
+`系统设置 → 隐私与安全性 → 自动化 → 音乐小窗 → 音乐`（仅 Apple Music 需要）
 
 ### 系统要求
 
 - macOS 14 或更新版本
-- Apple Music
+- Apple Music 和/或 网易云音乐
 - 原生 Liquid Glass 需要 macOS 26+；旧系统会自动使用回退玻璃效果
 
 ## 🎮 使用
@@ -101,7 +102,7 @@
 | 操作 | 方式 |
 | --- | --- |
 | 移动播放器 | 按住卡片顶部空白区域拖动 |
-| 打开 Apple Music | 点击专辑封面；小组件会隐藏，关闭 Music 窗口后自动回来 |
+| 打开当前播放器 | 点击专辑封面；Apple Music 下小组件会隐藏，网易云音乐下保持显示 |
 | 显示 / 隐藏播放器 | 菜单栏音符图标，`⌘⇧M` |
 | 收起为迷你模式 | 卡片右上角的收起按钮，或菜单栏 → 收起为迷你模式 |
 | 展开完整播放器 | 长条右侧的展开按钮，或菜单栏 → 展开完整播放器 |
@@ -206,5 +207,5 @@ Apple Music 的脚本接口不暴露逐行时间轴；如果本机没有官方 T
 ---
 
 <div align="center">
-  <sub>Made for macOS · Apple Music only · Released under the MIT License</sub>
+  <sub>Made for macOS · Apple Music & NetEase Cloud Music · Released under the MIT License</sub>
 </div>

@@ -93,9 +93,11 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     /// Album artwork click: open Music and keep only one player UI on screen.
     func hideAndOpenMusic() {
         userHidden = false
-        autoHiddenForMusic = true
-        musicLaunchGraceUntil = Date().addingTimeInterval(3.5)
-        hideWindow()
+        if PlayerModel.shared.playbackSource == .appleMusic {
+            autoHiddenForMusic = true
+            musicLaunchGraceUntil = Date().addingTimeInterval(3.5)
+            hideWindow()
+        }
         PlayerModel.shared.openMusic()
         ensureMusicMonitor()
     }
@@ -244,6 +246,9 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     }
 
     private func musicHasVisibleWindow() -> Bool {
+        // NetEase is allowed to stay open alongside the widget; only the
+        // Apple Music window uses the mutual-exclusion behavior.
+        guard PlayerModel.shared.playbackSource == .appleMusic else { return false }
         guard let music = NSRunningApplication
             .runningApplications(withBundleIdentifier: "com.apple.Music")
             .first else {

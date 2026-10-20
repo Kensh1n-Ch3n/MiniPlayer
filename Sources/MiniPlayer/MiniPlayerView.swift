@@ -174,8 +174,8 @@ struct MiniPlayerView: View {
                     .animation(.easeOut(duration: 0.14), value: artworkHover.isHovered)
                 }
                 .buttonStyle(SoftPressButtonStyle())
-                .help("打开 Apple Music")
-                .accessibilityLabel("打开 Apple Music")
+                .help("打开 \(model.playerDisplayName)")
+                .accessibilityLabel("打开 \(model.playerDisplayName)")
                 .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 1) {
@@ -278,8 +278,8 @@ struct MiniPlayerView: View {
                     .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(SoftPressButtonStyle())
-            .help("打开 Apple Music")
-            .accessibilityLabel("打开 Apple Music")
+            .help("打开 \(model.playerDisplayName)")
+            .accessibilityLabel("打开 \(model.playerDisplayName)")
             .onHover { hoveringArtwork = $0 }
 
             VStack(alignment: .leading, spacing: 3) {
@@ -364,6 +364,7 @@ struct MiniPlayerView: View {
                     )
             }
             .frame(height: 14)
+            .allowsHitTesting(model.canSeek)
 
             Text("-" + formattedTime(remaining))
                 .font(.system(size: 10.5, weight: .medium))
@@ -450,7 +451,7 @@ struct MiniPlayerView: View {
                     active: model.snapshot?.favorited == true,
                     activeColor: Color(red: 1.0, green: 0.83, blue: 0.38),
                     help: model.snapshot?.favorited == true ? "取消收藏" : "收藏",
-                    disabled: !model.hasTrack,
+                    disabled: !model.hasTrack || !model.canFavorite,
                     action: model.toggleFavorite
                 )
 

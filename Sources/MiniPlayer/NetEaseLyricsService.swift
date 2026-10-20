@@ -71,7 +71,7 @@ enum NetEaseLyricsService {
     // MARK: - API
 
     private static func search(query: String, for track: TrackSnapshot) async -> Song? {
-        guard var components = URLComponents(string: "https://music.163.com/api/search/get/web") else {
+        guard var components = URLComponents(string: "https://music.163.com/api/search/get") else {
             return nil
         }
         components.queryItems = [

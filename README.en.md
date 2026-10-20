@@ -4,12 +4,12 @@
 
 # MiniPlayer for Apple Music
 
-**A floating Apple Music player for macOS, with just the right amount of desktop and menu bar lyrics.**
+**A floating macOS player for Apple Music and NetEase Cloud Music, with desktop and menu bar lyrics.**
 
 English | [简体中文](README.md)
 
 <p>
-  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.1.5-blueviolet?style=flat-square"></a>
+  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.2.0-blueviolet?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift">
   <img alt="Liquid Glass" src="https://img.shields.io/badge/UI-Liquid%20Glass-8A2BE2?style=flat-square">
@@ -36,6 +36,7 @@ English | [简体中文](README.md)
 
 ## ✨ Features
 
+- **Two playback sources**: Apple Music and NetEase Cloud Music. The app uses system Now Playing to follow the active player automatically, including track changes, pause/play, lyrics, and artwork.
 - **Native Liquid Glass**: macOS 26+ uses SwiftUI's `.glassEffect(.clear, in:)` for system refraction, blur, and edge highlights; macOS 14–15 falls back to a custom blur.
 - **Mini capsule mode**: collapse the player into a 300×56 capsule with artwork, title, previous / play-pause / next, expand, and a thin progress line. Click the artwork to open Apple Music; hovering shows a highlight and an open arrow.
 - **Full playback controls**: favorite, previous, play / pause, next; the progress bar supports click and drag seeking.
@@ -84,7 +85,7 @@ English | [简体中文](README.md)
 
 On first launch, macOS will ask:
 
-> "MiniPlayer.app" wants to control "Music.app"
+> "MiniPlayer.app" wants to control "Music.app" (Apple Music only)
 
 Choose **Allow**. If you accidentally choose "Don't Allow", open **Automation Permission Settings…** from the MiniPlayer menu bar menu, or go to:
 
@@ -93,7 +94,7 @@ Choose **Allow**. If you accidentally choose "Don't Allow", open **Automation Pe
 ### Requirements
 
 - macOS 14 or later
-- Apple Music
+- Apple Music and/or NetEase Cloud Music
 - Native Liquid Glass requires macOS 26+; older systems automatically use the fallback glass effect
 
 ## 🎮 Usage
@@ -101,7 +102,7 @@ Choose **Allow**. If you accidentally choose "Don't Allow", open **Automation Pe
 | Action | How |
 | --- | --- |
 | Move the player | Drag the empty top area of the card |
-| Open Apple Music | Click the album artwork; the widget hides and returns when the Music window closes |
+| Open the active player | Click the album artwork; with Apple Music the widget hides, while with NetEase it stays visible |
 | Show / hide the player | Menu bar music icon, `⌘⇧M` |
 | Collapse to mini mode | Collapse button at the top-right of the card, or menu bar → Collapse to Mini Mode |
 | Expand the full player | Expand button at the right of the capsule, or menu bar → Expand Full Player |
@@ -206,5 +207,5 @@ This project is released under the **MIT License**. See [LICENSE](LICENSE) for t
 ---
 
 <div align="center">
-  <sub>Made for macOS · Apple Music only · Released under the MIT License</sub>
+  <sub>Made for macOS · Apple Music & NetEase Cloud Music · Released under the MIT License</sub>
 </div>
