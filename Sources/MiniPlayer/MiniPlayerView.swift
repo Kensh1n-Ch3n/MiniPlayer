@@ -119,7 +119,7 @@ struct MiniPlayerView: View {
             if isMini {
                 miniProgressLine
                     .padding(.leading, 50)
-                    .padding(.trailing, 16)
+                    .padding(.trailing, 40)
                     .padding(.bottom, 8)
             }
         }

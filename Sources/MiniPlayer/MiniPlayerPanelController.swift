@@ -36,6 +36,7 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     private var musicLaunchGraceUntil: Date?
     private var musicMonitorTask: Task<Void, Never>?
     private var miniModeCancellable: AnyCancellable?
+    private var sourceCancellable: AnyCancellable?
     private var hoverTask: Task<Void, Never>?
     private var mouseDownMonitor: Any?
 
@@ -46,6 +47,7 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     /// Called once at launch. The widget yields to a visible Music window.
     func start() {
         observeMiniMode()
+        observePlaybackSource()
         startHoverMonitor()
         installDragMonitor()
         ensureMusicMonitor()
@@ -103,6 +105,26 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     }
 
     // MARK: - Mini mode
+
+    private func observePlaybackSource() {
+        guard sourceCancellable == nil else { return }
+        sourceCancellable = PlayerModel.shared.$playbackSource
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] source in
+                guard let self else { return }
+                guard source == .netEaseMusic else {
+                    self.evaluateMusicPresence()
+                    return
+                }
+                self.musicLaunchGraceUntil = nil
+                guard self.autoHiddenForMusic, !self.userHidden else { return }
+                self.autoHiddenForMusic = false
+                if !self.isVisible {
+                    self.showWindow()
+                }
+            }
+    }
 
     private func observeMiniMode() {
         guard miniModeCancellable == nil else { return }
@@ -226,6 +248,14 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     }
 
     private func evaluateMusicPresence() {
+        guard PlayerModel.shared.playbackSource == .appleMusic else {
+            guard autoHiddenForMusic, !userHidden else { return }
+            autoHiddenForMusic = false
+            musicLaunchGraceUntil = nil
+            if !isVisible { showWindow() }
+            return
+        }
+
         if musicHasVisibleWindow() {
             musicLaunchGraceUntil = nil
             if isVisible {
