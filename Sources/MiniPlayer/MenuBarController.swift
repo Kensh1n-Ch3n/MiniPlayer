@@ -85,11 +85,11 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         let showLyrics = PlayerModel.shared.lyricsInMenuBar
         lyricsView.isHidden = !showLyrics
         if showLyrics {
-            statusItem.length = 120
+            statusItem.length = 150
             statusItem.button?.image = nil
             statusItem.button?.title = ""
             statusItem.button?.layoutSubtreeIfNeeded()
-            lyricsView.frame = NSRect(x: 0, y: 0, width: 120, height: 22)
+            lyricsView.frame = NSRect(x: 0, y: 0, width: 150, height: 22)
             lyricsView.start()
         } else {
             lyricsView.stop()
