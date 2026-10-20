@@ -61,6 +61,11 @@
 </p>
 
 <p align="center">
+  <b>菜单栏歌词</b><br><br>
+  <img src="docs/ui-menubar.png" alt="菜单栏歌词" width="100%">
+</p>
+
+<p align="center">
   <b>迷你长条模式</b><br><br>
   <img src="docs/ui-mini.png" alt="迷你长条模式" width="72%">
 </p>
