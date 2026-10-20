@@ -139,8 +139,8 @@ final class PlayerModel: ObservableObject {
             // in flight. In that case this snapshot is stale and must not
             // overwrite the optimistic state.
             guard revision == stateRevision, pendingControls == 0 else { return }
-            errorMessage = nil
-            needsAutomationPermission = false
+            if errorMessage != nil { errorMessage = nil }
+            if needsAutomationPermission { needsAutomationPermission = false }
 
             guard let fresh else {
                 clearCurrentTrack()
