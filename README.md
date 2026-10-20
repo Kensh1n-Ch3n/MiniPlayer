@@ -6,6 +6,8 @@
 
 **给 macOS Apple Music 的悬浮播放器，加上刚刚好的桌面歌词和菜单栏歌词。**
 
+[English](README.en.md) | 简体中文
+
 <p>
   <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.1.4-blueviolet?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
@@ -127,7 +129,7 @@
 
 - 使用真实时间轴的歌，**偏置 0 即对齐**。
 - 如果某个版本的音乐/歌词本身有时间差，可以在菜单栏微调 ±0.2 秒。
-- 英文歌保留英文；韩文、日文等非拉丁原文才显示中文译文。
+- 英文、韩文、日文保留原文，不再用中文译文覆盖。
 
 ## ⚡ 资源占用
 
