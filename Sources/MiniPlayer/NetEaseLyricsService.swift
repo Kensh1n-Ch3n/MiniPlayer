@@ -20,6 +20,22 @@ enum NetEaseLyricsService {
         let duration: Double?
     }
 
+    private struct CloudSearchResponse: Decodable {
+        let result: CloudResult?
+    }
+
+    private struct CloudResult: Decodable {
+        let songs: [CloudSong]?
+    }
+
+    private struct CloudSong: Decodable {
+        let id: Int
+        let name: String
+        let ar: [Artist]?
+        let al: Album?
+        let dt: Double?
+    }
+
     private struct Artist: Decodable {
         let name: String?
     }
@@ -42,7 +58,9 @@ enum NetEaseLyricsService {
         guard !title.isEmpty else { return nil }
 
         let query = [title, track.artist].filter { !$0.isEmpty }.joined(separator: " ")
-        guard let song = await search(query: query, for: track) else { return nil }
+        guard let song = await search(query: query, for: track) else {
+            return nil
+        }
         guard let lyricText = await fetchLyricText(songID: song.id),
               let parsed = LyricsService.parseLRC(lyricText) else {
             return nil
@@ -71,7 +89,14 @@ enum NetEaseLyricsService {
     // MARK: - API
 
     private static func search(query: String, for track: TrackSnapshot) async -> Song? {
-        guard var components = URLComponents(string: "https://music.163.com/api/search/get") else {
+        if let cloud = await cloudSearch(query: query, for: track) {
+            return cloud
+        }
+        return await legacySearch(query: query, for: track)
+    }
+
+    private static func cloudSearch(query: String, for track: TrackSnapshot) async -> Song? {
+        guard var components = URLComponents(string: "https://music.163.com/api/cloudsearch/pc") else {
             return nil
         }
         components.queryItems = [
@@ -81,15 +106,39 @@ enum NetEaseLyricsService {
             URLQueryItem(name: "offset", value: "0")
         ]
         guard let url = components.url,
-              let response: SearchResponse = await fetchJSON(url),
+              let response: CloudSearchResponse = await fetchJSON(url),
               let songs = response.result?.songs,
               !songs.isEmpty else {
             return nil
         }
+        let mapped = songs.map {
+            Song(id: $0.id, name: $0.name, artists: $0.ar, album: $0.al, duration: $0.dt)
+        }
+        let scored = mapped.map { ($0, score($0, for: track)) }.sorted { $0.1 < $1.1 }
+        guard let best = scored.first, best.1 < 36 else { return nil }
+        return best.0
+    }
 
-        let best = songs.min { score($0, for: track) < score($1, for: track) }
-        guard let best, score(best, for: track) < 36 else { return nil }
-        return best
+    private static func legacySearch(query: String, for track: TrackSnapshot) async -> Song? {
+        guard var components = URLComponents(string: "https://music.163.com/api/search/get") else {
+            return nil
+        }
+        components.queryItems = [
+            URLQueryItem(name: "s", value: query),
+            URLQueryItem(name: "type", value: "1"),
+            URLQueryItem(name: "limit", value: "10"),
+            URLQueryItem(name: "offset", value: "0")
+        ]
+        guard let url = components.url else { return nil }
+        guard let response: SearchResponse = await fetchJSON(url) else {
+            return nil
+        }
+        guard let songs = response.result?.songs, !songs.isEmpty else {
+            return nil
+        }
+        let scored = songs.map { ($0, score($0, for: track)) }.sorted { $0.1 < $1.1 }
+        guard let best = scored.first, best.1 < 36 else { return nil }
+        return best.0
     }
 
     private static func fetchLyricText(songID: Int) async -> String? {

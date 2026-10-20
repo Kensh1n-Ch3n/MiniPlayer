@@ -52,11 +52,11 @@ enum LyricsService {
 
         // Apple Music's own cached TTML has Apple's line timings, so this is
         // the best source when it is available for the current track.
-        if let apple = await waitForAppleMusicLyrics(for: track) {
+        let isNetEase = track.persistentID.hasPrefix("netease|")
+        if !isNetEase, let apple = await waitForAppleMusicLyrics(for: track) {
             save(apple, for: track)
             return apple
         }
-
         let online = await fetchOnline(for: track)
 
         // Prefer real timed lyrics over a guessed timeline.
