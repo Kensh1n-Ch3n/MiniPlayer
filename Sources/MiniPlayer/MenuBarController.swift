@@ -267,6 +267,7 @@ private final class LyricStatusView: NSView {
     private var previousOffset: CGFloat = 0
     private var horizontalOffset: CGFloat = 0
     private var transitionStartedAt: CFTimeInterval = 0
+    private var lineStartedAt: CFTimeInterval = 0
     private let font = NSFont.menuBarFont(ofSize: 13)
     private let gap: CGFloat = 32
 
@@ -296,6 +297,7 @@ private final class LyricStatusView: NSView {
             previousLine = currentLine.isEmpty ? nil : currentLine
             previousOffset = horizontalOffset
             transitionStartedAt = CACurrentMediaTime()
+            lineStartedAt = transitionStartedAt
             currentLine = text
             horizontalOffset = 0
         }
@@ -306,8 +308,12 @@ private final class LyricStatusView: NSView {
         let maximumOffset = max(0, width - bounds.width + padding * 2)
 
         if canScroll {
-            // Scroll only until the end of the line is visible, then stop.
-            horizontalOffset = min(maximumOffset, horizontalOffset + 1.0)
+            // Pause briefly at the start of each line so the beginning is
+            // readable before the marquee starts. Scroll until the end of the
+            // line is visible, then stop.
+            if CACurrentMediaTime() - lineStartedAt >= 0.9 {
+                horizontalOffset = min(maximumOffset, horizontalOffset + 1.0)
+            }
         } else {
             horizontalOffset = 0
         }
