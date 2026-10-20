@@ -32,6 +32,20 @@ enum NetEasePlaybackService {
     });
     """#
 
+    private static let artworkIdentifierScript = #"""
+    ObjC.import("Foundation");
+    $.NSBundle.bundleWithPath("/System/Library/PrivateFrameworks/MediaRemote.framework/").load;
+    const Request = $.NSClassFromString("MRNowPlayingRequest");
+    const item = Request.localNowPlayingItem;
+    const metadata = item ? item.metadata : null;
+    let out = "";
+    try {
+      const value = metadata ? metadata.valueForKey("artworkIdentifier") : null;
+      out = value ? ObjC.unwrap(value) : "";
+    } catch (_) {}
+    out;
+    """#
+
     private static func commandScript(_ command: Int) -> String {
         #"""
         ObjC.import("Foundation");
@@ -45,6 +59,8 @@ enum NetEasePlaybackService {
     }
 
     private static var likedTrackKeys: Set<String> = []
+    private static var cachedSnapshot: TrackSnapshot?
+    private static var lastSnapshotAt: Date = .distantPast
 
     private struct Payload: Decodable {
         let bundleId: String?
@@ -62,6 +78,11 @@ enum NetEasePlaybackService {
     }
 
     static func snapshot() async -> TrackSnapshot? {
+        if let cachedSnapshot,
+           Date().timeIntervalSince(lastSnapshotAt) < 1.5 {
+            return cachedSnapshot
+        }
+
         guard isRunning,
               let output = await runJavaScript(readScript),
               let data = output.data(using: .utf8),
@@ -82,7 +103,7 @@ enum NetEasePlaybackService {
         if duration > 0 { position = min(position, duration) }
 
         let key = "netease|\(title)|\(payload.artist ?? "")|\(Int(duration.rounded()))"
-        return TrackSnapshot(
+        let snapshot = TrackSnapshot(
             state: rate > 0 ? .playing : .paused,
             name: title,
             artist: payload.artist ?? "",
@@ -92,6 +113,9 @@ enum NetEasePlaybackService {
             persistentID: key,
             favorited: likedTrackKeys.contains(key)
         )
+        cachedSnapshot = snapshot
+        lastSnapshotAt = Date()
+        return snapshot
     }
 
     static func setPlayback(_ shouldPlay: Bool) async {
@@ -120,6 +144,18 @@ enum NetEasePlaybackService {
     static func artworkURL(for track: TrackSnapshot) async -> URL? {
         if let cached = MusicService.cachedArtworkURL(for: track.cacheKey) {
             return cached
+        }
+
+        // The system Now Playing item carries a local artwork identifier (a
+        // URL supplied by the active player), so prefer it over a search.
+        if let identifier = await localArtworkURL() {
+            if let (data, _) = try? await URLSession.shared.data(from: identifier),
+               !data.isEmpty {
+                let destination = MusicService.artworkFileURL(for: track.cacheKey)
+                if (try? data.write(to: destination, options: .atomic)) != nil {
+                    return destination
+                }
+            }
         }
 
         let query = [track.name, track.artist].filter { !$0.isEmpty }.joined(separator: " ")
@@ -155,6 +191,15 @@ enum NetEasePlaybackService {
         } catch {
             return nil
         }
+    }
+
+    private static func localArtworkURL() async -> URL? {
+        guard let output = await runJavaScript(artworkIdentifierScript),
+              !output.isEmpty,
+              let url = URL(string: output.replacingOccurrences(of: "http://", with: "https://")) else {
+            return nil
+        }
+        return url
     }
 
     private static func runJavaScript(_ source: String) async -> String? {

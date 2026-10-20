@@ -218,64 +218,39 @@ enum MusicService {
             .replacingOccurrences(of: "\"", with: "\\\"")
     }
 
-    private final class DataBox: @unchecked Sendable {
-        var data = Data()
-    }
+    private static let scriptQueue = DispatchQueue(
+        label: "com.local.musicminiplayer.applescript",
+        qos: .userInitiated
+    )
+    private static var scriptCache: [String: NSAppleScript] = [:]
 
     private static func runScript(_ source: String) async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                do {
-                    let process = Process()
-                    process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-                    process.arguments = ["-e", source]
-
-                    let outputPipe = Pipe()
-                    let errorPipe = Pipe()
-                    process.standardOutput = outputPipe
-                    process.standardError = errorPipe
-
-                    try process.run()
-
-                    let outputBox = DataBox()
-                    let errorBox = DataBox()
-                    let group = DispatchGroup()
-
-                    group.enter()
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        outputBox.data = outputPipe.fileHandleForReading.readDataToEndOfFile()
-                        group.leave()
-                    }
-
-                    group.enter()
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        errorBox.data = errorPipe.fileHandleForReading.readDataToEndOfFile()
-                        group.leave()
-                    }
-
-                    group.wait()
-                    process.waitUntilExit()
-
-                    let stdout = String(data: outputBox.data, encoding: .utf8) ?? ""
-                    let stderr = String(data: errorBox.data, encoding: .utf8) ?? ""
-
-                    guard process.terminationStatus == 0 else {
-                        let lowered = stderr.lowercased()
-                        if lowered.contains("not authorized")
-                            || lowered.contains("not allowed")
-                            || stderr.contains("(-1743)")
-                            || stderr.contains("不允许") {
-                            throw MusicServiceError.automationDenied
-                        }
-                        let message = stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-                        throw MusicServiceError.scriptFailed(message.isEmpty ? "Apple Music 操作失败" : message)
-                    }
-
-                    continuation.resume(returning: stdout)
-                } catch {
-                    continuation.resume(throwing: error)
+            scriptQueue.async {
+                let script: NSAppleScript
+                if let cached = scriptCache[source] {
+                    script = cached
+                } else if let compiled = NSAppleScript(source: source) {
+                    script = compiled
+                    if scriptCache.count > 48 { scriptCache.removeAll(keepingCapacity: true) }
+                    scriptCache[source] = compiled
+                } else {
+                    continuation.resume(throwing: MusicServiceError.scriptFailed("AppleScript 编译失败"))
+                    return
                 }
+
+                var errorInfo: NSDictionary?
+                let result = script.executeAndReturnError(&errorInfo)
+                if let errorInfo {
+                    let message = (errorInfo[NSAppleScript.errorMessage] as? String)
+                        ?? (errorInfo[NSAppleScript.errorBriefMessage] as? String)
+                        ?? "AppleScript 执行失败"
+                    continuation.resume(throwing: MusicServiceError.scriptFailed(message))
+                    return
+                }
+                continuation.resume(returning: result.stringValue ?? "")
             }
         }
     }
+
 }

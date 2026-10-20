@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let model = PlayerModel.shared
         model.start()
+        CachePruner.pruneInBackground()
         MenuBarController.shared.start()
         MiniPlayerPanelController.shared.start()
 

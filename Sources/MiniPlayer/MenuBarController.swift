@@ -79,17 +79,27 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.updateStatusItemAppearance() }
             .store(in: &cancellables)
+        PlayerModel.shared.$lyrics
+            .map { $0 == nil }
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.updateStatusItemAppearance() }
+            .store(in: &cancellables)
     }
 
     private func updateStatusItemAppearance() {
-        let showLyrics = PlayerModel.shared.lyricsInMenuBar
+        let model = PlayerModel.shared
+        let showLyrics = model.lyricsInMenuBar
+            && model.isPlaying
+            && model.currentLyricText != nil
+
         lyricsView.isHidden = !showLyrics
         if showLyrics {
-            statusItem.length = 150
+            statusItem.length = 100
             statusItem.button?.image = nil
             statusItem.button?.title = ""
             statusItem.button?.layoutSubtreeIfNeeded()
-            lyricsView.frame = NSRect(x: 0, y: 0, width: 150, height: 22)
+            lyricsView.frame = NSRect(x: 0, y: 0, width: 100, height: 22)
             lyricsView.start()
         } else {
             lyricsView.stop()
@@ -263,7 +273,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
 private final class LyricStatusView: NSView {
     weak var hitTestView: NSView?
-    private let logoWidth: CGFloat = 22
+    private let logoWidth: CGFloat = 0
     private var timer: Timer?
     private var currentLine = ""
     private var previousLine: String?
@@ -347,10 +357,6 @@ private final class LyricStatusView: NSView {
         drawLine(currentLine, x: x, y: (1 - progress) * bounds.height, alpha: 1)
         NSGraphicsContext.restoreGraphicsState()
 
-        MenuBarGlyph.draw(
-            in: NSRect(x: bounds.width - 19, y: (bounds.height - 16) / 2, width: 16, height: 16),
-            color: .labelColor
-        )
     }
 
     private func drawLine(_ text: String, x: CGFloat, y: CGFloat, alpha: CGFloat) {

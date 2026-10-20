@@ -9,7 +9,7 @@
 English | [简体中文](README.md)
 
 <p>
-  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.2.0-blueviolet?style=flat-square"></a>
+  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.2.1-blueviolet?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift">
   <img alt="Liquid Glass" src="https://img.shields.io/badge/UI-Liquid%20Glass-8A2BE2?style=flat-square">
@@ -40,16 +40,15 @@ English | [简体中文](README.md)
 - **Native Liquid Glass**: macOS 26+ uses SwiftUI's `.glassEffect(.clear, in:)` for system refraction, blur, and edge highlights; macOS 14–15 falls back to a custom blur.
 - **Mini capsule mode**: collapse the player into a 300×56 capsule with artwork, title, previous / play-pause / next, expand, and a thin progress line. Click the artwork to open Apple Music; hovering shows a highlight and an open arrow.
 - **Full playback controls**: favorite, previous, play / pause, next; the progress bar supports click and drag seeking.
-- **Native interaction feedback**: play/pause icons scale-swap, previous/next slide out in their direction and slide back in; rapid clicks are serialized so state never flips incorrectly.
-- **Artwork opens Apple Music**: clicking the artwork opens or activates Music and hides the widget. The music window and widget are mutually exclusive; closing, minimizing, or quitting Music brings the widget back automatically.
-- **Single-line desktop lyrics**: only the current line is shown — no previous or next line. The window width adapts to lyric length, so short lines are narrower and long lines wider, leaving more room to drag horizontally. Toggle with the lyrics button at the lower-right of the player.
-- **Menu bar lyrics**: the current line appears in the menu bar. Long lines scroll horizontally and smoothly, stop after the full line has been shown, and do not loop. Line changes slide vertically. Hold `⌘` and drag the item to reposition it in the menu bar.
-- **Drag lyrics directly**: hover the desktop lyric text to get a hand cursor, then drag the text itself; the position is saved automatically. No menu or extra handle is needed.
-- **Lyric sync**: prefers Apple Music's local cached line-synced TTML and uses Apple's own timeline with zero offset by default.
-- **Lyric fallbacks**: if no official cache exists, tries LRCLIB synced LRC, then NetEase Cloud Music LRC, and finally embedded lyrics / estimated timing.
-- **Original language first**: Traditional Chinese is converted to Simplified Chinese; English, Korean, and Japanese stay in their original language and are no longer replaced by Chinese translations.
-- **On-screen bounds**: both the player card and desktop lyrics are constrained to the visible screen area and cannot be dragged off-screen.
-- **Low overhead**: with desktop lyrics visible during playback, about **1.1% CPU** and roughly **40 MB** resident memory.
+- **Lightweight transitions**: play/pause and previous/next use directional transition animations for clear feedback.
+- **Artwork interaction**: click the artwork to open the active player. With Apple Music the widget hides; with NetEase it stays visible. Hovering shows an open affordance.
+- **Single-line desktop lyrics**: only the current line is shown — no previous or next line. The window adapts to lyric length for easier horizontal dragging. Toggle with the lyrics button at the lower-right of the player.
+- **Menu bar lyrics**: while playing, the current line appears in the menu bar; when paused or stopped, the icon is shown instead. Long lines scroll smoothly and stop at the end without looping.
+- **Drag lyrics directly**: drag the desktop lyric text itself; the position is saved automatically.
+- **Lyric matching**: Apple Music uses Apple's official timeline; NetEase uses NetEase's lyric service; if that source has no lyrics, the app falls back to LRCLIB and other sources.
+- **Original language first**: Traditional Chinese is converted to Simplified Chinese; English, Korean, and Japanese keep their original text.
+- **On-screen bounds**: the player card and desktop lyrics stay within the visible screen area.
+- **Low overhead**: about **40 MB** resident memory; playback and lyric rendering stay lightweight.
 
 ## 📸 Screenshots
 
@@ -132,19 +131,12 @@ Lyrics cache directory: `~/Library/Caches/MiniPlayer/lyrics`
 - If a particular release has its own timing offset, adjust it in ±0.2s steps from the menu bar.
 - English, Korean, and Japanese lyrics keep their original text; Chinese translations are no longer substituted.
 
-## ⚡ Resource Usage
+## ⚡ Resource Usage & Cache
 
-Measured locally with `top` on Apple Silicon / macOS 27:
-
-| State | Average CPU |
-| --- | ---: |
-| Playing + desktop lyrics visible | **1.14%** |
-| Playing + desktop lyrics hidden | **0.75%** |
-| Paused | **0.64%** |
-
-- Resident memory: about **40 MB**
-- Lyrics are not redrawn at 10 Hz; the app wakes precisely at the next line timestamp
-- The equalizer runs on Core Animation and does not continuously occupy the main thread
+- About **40 MB** resident memory; only the current track's artwork and lyrics are kept in memory.
+- Artwork cache: `~/Library/Caches/MiniPlayer/artwork`, capped at about **160 MB**.
+- Lyric cache: `~/Library/Caches/MiniPlayer/lyrics`, capped at about **32 MB**.
+- Caches older than **30 days** are pruned at launch; when a cap is exceeded, the oldest files are removed first.
 
 ## 🛠️ Build from Source
 
