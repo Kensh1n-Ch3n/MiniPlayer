@@ -160,17 +160,30 @@ struct MiniPlayerView: View {
     private var miniContent: some View {
         HStack(spacing: 6) {
             Button {
-                MiniPlayerPanelController.shared.hideAndOpenMusic()
-            } label: {
-                AlbumArtworkView(
-                    image: model.artwork,
-                    size: 32,
-                    cornerRadius: 16
-                )
-            }
-            .buttonStyle(SoftPressButtonStyle())
-            .help("打开 Apple Music")
-            .accessibilityLabel("打开 Apple Music")
+                    MiniPlayerPanelController.shared.hideAndOpenMusic()
+                } label: {
+                    AlbumArtworkView(
+                        image: model.artwork,
+                        size: 32,
+                        cornerRadius: 16
+                    )
+                    .overlay {
+                        if model.miniArtworkHovered {
+                            Circle()
+                                .fill(Color.black.opacity(0.24))
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(.white.opacity(0.96))
+                        }
+                    }
+                    .contentShape(Circle())
+                    .scaleEffect(model.miniArtworkHovered ? 1.06 : 1)
+                    .animation(.easeOut(duration: 0.14), value: model.miniArtworkHovered)
+                }
+                .buttonStyle(SoftPressButtonStyle())
+                .help("打开 Apple Music")
+                .accessibilityLabel("打开 Apple Music")
+                .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(model.displayTitle)
@@ -269,9 +282,9 @@ struct MiniPlayerView: View {
                     .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(SoftPressButtonStyle())
-            .onHover { hoveringArtwork = $0 }
             .help("打开 Apple Music")
             .accessibilityLabel("打开 Apple Music")
+            .onHover { hoveringArtwork = $0 }
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(model.displayTitle)

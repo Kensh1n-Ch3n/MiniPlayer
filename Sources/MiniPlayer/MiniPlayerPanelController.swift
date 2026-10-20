@@ -36,6 +36,7 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     private var musicLaunchGraceUntil: Date?
     private var musicMonitorTask: Task<Void, Never>?
     private var miniModeCancellable: AnyCancellable?
+    private var hoverTask: Task<Void, Never>?
 
     private override init() {
         super.init()
@@ -44,6 +45,7 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     /// Called once at launch. The widget yields to a visible Music window.
     func start() {
         observeMiniMode()
+        startHoverMonitor()
         ensureMusicMonitor()
         if musicHasVisibleWindow() {
             autoHiddenForMusic = true
@@ -107,7 +109,29 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
             }
     }
 
+    private func startHoverMonitor() {
+        guard hoverTask == nil else { return }
+        hoverTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 60_000_000)
+                guard let self, !Task.isCancelled else { return }
+                self.updateMiniArtworkHover()
+            }
+        }
+    }
+
+    private func updateMiniArtworkHover() {
+        guard let panel, isVisible, PlayerModel.shared.isMiniMode else {
+            PlayerModel.shared.setMiniArtworkHovered(false)
+            return
+        }
+        let point = panel.convertPoint(fromScreen: NSEvent.mouseLocation)
+        let artworkRect = NSRect(x: 18, y: 20, width: 32, height: 32)
+        PlayerModel.shared.setMiniArtworkHovered(artworkRect.contains(point))
+    }
+
     private func resizePanel(isMini: Bool, animated: Bool) {
+        PlayerModel.shared.setMiniArtworkHovered(false)
         guard let panel else { return }
         let targetSize = MiniMetrics.windowSize(isMini: isMini)
         guard abs(panel.frame.width - targetSize.width) > 0.5
@@ -235,6 +259,7 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     }
 
     private func hideWindow() {
+        PlayerModel.shared.setMiniArtworkHovered(false)
         panel?.orderOut(nil)
         isVisible = false
         PlayerModel.shared.setPanelVisible(false)

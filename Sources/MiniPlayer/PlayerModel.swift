@@ -15,6 +15,7 @@ final class PlayerModel: ObservableObject {
     @Published private(set) var needsAutomationPermission = false
     @Published private(set) var panelVisible = true
     @Published private(set) var isMiniMode = false
+    @Published private(set) var miniArtworkHovered = false
     @Published private(set) var lyricsVisible = false
     @Published private(set) var lyricsEditing = false
     @Published private(set) var lyricsOffset: Double = 0
@@ -360,6 +361,11 @@ final class PlayerModel: ObservableObject {
 
     func setPanelVisible(_ visible: Bool) {
         panelVisible = visible
+    }
+
+    func setMiniArtworkHovered(_ hovered: Bool) {
+        guard miniArtworkHovered != hovered else { return }
+        miniArtworkHovered = hovered
     }
 
     func toggleMiniMode() {
