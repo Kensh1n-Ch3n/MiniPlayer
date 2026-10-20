@@ -90,7 +90,7 @@ final class PlayerModel: ObservableObject {
     }
 
     var canFavorite: Bool {
-        playbackSource == .appleMusic
+        true
     }
 
     var canSeek: Bool {
@@ -365,14 +365,13 @@ final class PlayerModel: ObservableObject {
     }
 
     func toggleFavorite() {
-        guard playbackSource == .appleMusic else { return }
         guard var snap = snapshot, !snap.isEmpty else { return }
         snap.favorited.toggle()
         snapshot = snap
 
         let source = playbackSource
         performControl {
-            try await PlaybackService.setFavorited(snap.favorited, source: source)
+            try await PlaybackService.setFavorited(snap.favorited, source: source, track: snap)
         }
     }
 

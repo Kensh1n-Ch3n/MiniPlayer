@@ -118,7 +118,8 @@ struct MiniPlayerView: View {
         .overlay(alignment: .bottom) {
             if isMini {
                 miniProgressLine
-                    .padding(.horizontal, 30)
+                    .padding(.leading, 50)
+                    .padding(.trailing, 16)
                     .padding(.bottom, 8)
             }
         }

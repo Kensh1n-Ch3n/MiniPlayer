@@ -84,12 +84,12 @@ enum PlaybackService {
         }
     }
 
-    static func setFavorited(_ value: Bool, source: PlaybackSource) async throws {
+    static func setFavorited(_ value: Bool, source: PlaybackSource, track: TrackSnapshot) async throws {
         switch source {
         case .appleMusic:
             try await MusicService.setFavorited(value)
         case .netEaseMusic:
-            break
+            await NetEasePlaybackService.setLiked(value, track: track)
         }
     }
 }

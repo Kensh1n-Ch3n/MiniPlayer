@@ -44,6 +44,8 @@ enum NetEasePlaybackService {
         """#
     }
 
+    private static var likedTrackKeys: Set<String> = []
+
     private struct Payload: Decodable {
         let bundleId: String?
         let title: String?
@@ -79,6 +81,7 @@ enum NetEasePlaybackService {
         }
         if duration > 0 { position = min(position, duration) }
 
+        let key = "netease|\(title)|\(payload.artist ?? "")|\(Int(duration.rounded()))"
         return TrackSnapshot(
             state: rate > 0 ? .playing : .paused,
             name: title,
@@ -86,8 +89,8 @@ enum NetEasePlaybackService {
             album: payload.album ?? "",
             duration: duration,
             position: position,
-            persistentID: "netease|\(title)|\(payload.artist ?? "")|\(Int(duration.rounded()))",
-            favorited: false
+            persistentID: key,
+            favorited: likedTrackKeys.contains(key)
         )
     }
 
@@ -101,6 +104,17 @@ enum NetEasePlaybackService {
 
     static func previousTrack() async {
         _ = await runJavaScript(commandScript(5))
+    }
+
+    static func setLiked(_ liked: Bool, track: TrackSnapshot) async {
+        if liked {
+            likedTrackKeys.insert(track.cacheKey)
+        } else {
+            likedTrackKeys.remove(track.cacheKey)
+        }
+        // kMRLikeTrack. NetEase's Now Playing surface supports this command on
+        // clients that publish the media command set.
+        _ = await runJavaScript(commandScript(106))
     }
 
     static func artworkURL(for track: TrackSnapshot) async -> URL? {

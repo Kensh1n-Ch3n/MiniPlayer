@@ -50,9 +50,16 @@ enum LyricsService {
             return cached
         }
 
+        // Keep each player's lyrics matched to the player that is actually
+        // playing: NetEase tracks use NetEase's own cloudsearch/LRC first.
+        let isNetEase = track.persistentID.hasPrefix("netease|")
+        if isNetEase, let netease = await NetEaseLyricsService.fetch(for: track) {
+            save(netease, for: track)
+            return netease
+        }
+
         // Apple Music's own cached TTML has Apple's line timings, so this is
         // the best source when it is available for the current track.
-        let isNetEase = track.persistentID.hasPrefix("netease|")
         if !isNetEase, let apple = await waitForAppleMusicLyrics(for: track) {
             save(apple, for: track)
             return apple
@@ -66,8 +73,9 @@ enum LyricsService {
         }
 
         // LRCLIB often has only plain text for Chinese songs. NetEase provides
-        // real LRC timestamps and is therefore a better source for offset 0.
-        if let netease = await NetEaseLyricsService.fetch(for: track) {
+        // real LRC timestamps and is therefore a better fallback for Apple
+        // Music tracks when Apple's own timeline is unavailable.
+        if !isNetEase, let netease = await NetEaseLyricsService.fetch(for: track) {
             save(netease, for: track)
             return netease
         }
@@ -77,7 +85,7 @@ enum LyricsService {
             return online
         }
 
-        if let embedded = await MusicService.embeddedLyrics() {
+        if !isNetEase, let embedded = await MusicService.embeddedLyrics() {
             if let synced = parseLRC(embedded), synced.lines.count > 1 {
                 var result = synced
                 result.source = "Apple Music 内嵌歌词"
