@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 // MARK: - Lyric timing
@@ -195,19 +196,14 @@ struct DesktopLyricsView: View {
     }
 
     private func lyricsStack(_ lyrics: Lyrics, current: Int) -> some View {
-        Text(lyrics.lines[current].text)
-            .font(.system(size: 31 * model.lyricsFontScale, weight: .bold))
-            .foregroundStyle(.white)
-            .multilineTextAlignment(.center)
-            .lineLimit(2)
-            .minimumScaleFactor(0.55)
-            .truncationMode(.tail)
-            .shadow(color: .black.opacity(0.82), radius: 8, y: 2)
-            .shadow(color: model.accentColor.opacity(0.38), radius: 18)
-            .frame(maxWidth: .infinity)
-            .contentTransition(.opacity)
-            .animation(.easeInOut(duration: 0.20), value: current)
-            .padding(.horizontal, 30)
+        VerticalLyricsView(
+            lines: lyrics.lines,
+            current: current,
+            fontScale: model.lyricsFontScale,
+            accentColor: model.accentColor
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 30)
     }
 
     private func statusPill(icon: String?, title: String, subtitle: String?, loading: Bool) -> some View {
@@ -340,6 +336,8 @@ final class DesktopLyricsWindowController: NSObject, NSWindowDelegate {
     private var surfaceUpdateTask: Task<Void, Never>?
     private var lastSurfaceKey = ""
     private var screenObserver: NSObjectProtocol?
+    private var lyricsCancellable: AnyCancellable?
+    private var fontCancellable: AnyCancellable?
     private let defaults = UserDefaults.standard
     private let originXKey = "lyricsOriginX"
     private let originYKey = "lyricsOriginY"
@@ -356,6 +354,17 @@ final class DesktopLyricsWindowController: NSObject, NSWindowDelegate {
                 self?.reposition()
             }
         }
+
+        lyricsCancellable = PlayerModel.shared.$lyrics
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.resizeWindowForLyrics()
+            }
+        fontCancellable = PlayerModel.shared.$lyricsFontScale
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.resizeWindowForLyrics()
+            }
     }
 
     deinit {
@@ -613,6 +622,41 @@ final class DesktopLyricsWindowController: NSObject, NSWindowDelegate {
         return panel
     }
 
+    private func lyricsWindowWidth(for screen: NSScreen) -> CGFloat {
+        let visible = screen.visibleFrame
+        let maximum = max(360, min(900, visible.width - 160))
+        guard let lyrics = PlayerModel.shared.lyrics, !lyrics.lines.isEmpty else {
+            return min(420, maximum)
+        }
+
+        let size = 31 * PlayerModel.shared.lyricsFontScale
+        let font = NSFont.systemFont(ofSize: size, weight: .bold)
+        let measured = lyrics.lines
+            .map { ($0.text as NSString).size(withAttributes: [.font: font]).width }
+            .max() ?? 0
+        return min(maximum, max(360, measured + 80))
+    }
+
+    private func resizeWindowForLyrics() {
+        guard let window else { return }
+
+        let screen = window.screen ?? NSScreen.main
+        guard let screen else { return }
+        let desired = lyricsWindowWidth(for: screen)
+        let old = window.frame
+        guard abs(desired - old.width) > 1 else { return }
+
+        let visible = screen.visibleFrame
+        var frame = old
+        frame.size.width = desired
+        frame.origin.x = min(
+            max(old.midX - desired / 2, visible.minX),
+            max(visible.minX, visible.maxX - desired)
+        )
+        window.setFrame(frame, display: true)
+        updateDragSurface(force: true)
+    }
+
     private func targetFrame() -> NSRect {
         let savedOrigin: NSPoint? = {
             guard defaults.bool(forKey: hasCustomOriginKey) else { return nil }
@@ -635,7 +679,7 @@ final class DesktopLyricsWindowController: NSObject, NSWindowDelegate {
         }
 
         let visible = screen.visibleFrame
-        let width = max(620, min(1320, visible.width - 120))
+        let width = lyricsWindowWidth(for: screen)
         let height: CGFloat = 150
 
         if let savedOrigin {

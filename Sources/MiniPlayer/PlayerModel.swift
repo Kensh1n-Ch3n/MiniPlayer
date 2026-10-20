@@ -16,6 +16,7 @@ final class PlayerModel: ObservableObject {
     @Published private(set) var panelVisible = true
     @Published private(set) var isMiniMode = false
     @Published private(set) var lyricsVisible = false
+    @Published private(set) var lyricsInMenuBar = false
     @Published private(set) var lyricsEditing = false
     @Published private(set) var lyricsOffset: Double = 0
     @Published private(set) var lyricsFontScale: Double = 1
@@ -37,6 +38,9 @@ final class PlayerModel: ObservableObject {
     private init() {
         isMiniMode = defaults.bool(forKey: "miniMode")
         lyricsVisible = defaults.bool(forKey: "lyricsVisible")
+        if defaults.object(forKey: "lyricsInMenuBar") != nil {
+            lyricsInMenuBar = defaults.bool(forKey: "lyricsInMenuBar")
+        }
         // Offset 0 is meaningful now that we prefer real timed LRC files.
         // Reset the temporary +0.5s compensation once for existing installs.
         if defaults.integer(forKey: "lyricsOffsetVersion") < 1 {
@@ -120,10 +124,21 @@ final class PlayerModel: ObservableObject {
 
     /// Current lyric line, or nil when no timed lyrics are available.
     var currentLyricText: String? {
+        lyricText(at: Date())
+    }
+
+    func lyricText(at date: Date) -> String? {
         guard let lyrics, !lyrics.lines.isEmpty else { return nil }
-        let index = lyrics.index(at: lyricsPosition()) ?? 0
+        let index = lyrics.index(at: lyricsPosition(at: date)) ?? 0
         return lyrics.lines[index].text
     }
+
+    func setLyricsInMenuBar(_ enabled: Bool) {
+        guard lyricsInMenuBar != enabled else { return }
+        lyricsInMenuBar = enabled
+        defaults.set(enabled, forKey: "lyricsInMenuBar")
+    }
+
 
     // MARK: - Polling
 

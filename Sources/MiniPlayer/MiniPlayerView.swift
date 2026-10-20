@@ -34,12 +34,11 @@ enum MiniMetrics {
 }
 
 private extension View {
-    /// A soft falloff only (no hard outline), so white glyphs stay readable
-    /// without making the glass look outlined.
     func glassReadableShadow(_ intensity: Double = 1) -> some View {
+        // Tight, glyph-shaped shadow. A large blur makes dense text merge into
+        // a rectangle on the glass, so keep the falloff close to the glyphs.
         self
-            .shadow(color: .black.opacity(0.60 * intensity), radius: 2.5, y: 1)
-            .shadow(color: .black.opacity(0.30 * intensity), radius: 8, y: 2)
+            .shadow(color: .black.opacity(0.54 * intensity), radius: 1.3, y: 0.9)
     }
 }
 
@@ -185,7 +184,7 @@ struct MiniPlayerView: View {
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                    .glassReadableShadow()
+                    .glassReadableShadow(0.9)
 
                 Text(model.displaySubtitle)
                     .font(.system(size: 9.5, weight: .regular))
@@ -197,6 +196,7 @@ struct MiniPlayerView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .layoutPriority(1)
             .allowsHitTesting(false)
+            .clipped()
 
             MiniTrackButton(
                 systemName: "backward.fill",
@@ -288,7 +288,7 @@ struct MiniPlayerView: View {
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
-                    .glassReadableShadow()
+                    .glassReadableShadow(0.9)
 
                 HStack(spacing: 5) {
                     if model.needsAutomationPermission {
@@ -306,6 +306,7 @@ struct MiniPlayerView: View {
 
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .clipped()
 
             AudioBarsView(isPlaying: model.isPlaying)
                 .frame(width: 28, height: 24, alignment: .trailing)

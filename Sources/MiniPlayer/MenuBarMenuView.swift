@@ -47,6 +47,15 @@ struct MenuBarMenuView: View {
         }
         .keyboardShortcut("l", modifiers: [.command, .shift])
 
+        Button {
+            model.setLyricsInMenuBar(!model.lyricsInMenuBar)
+        } label: {
+            Label(
+                "在菜单栏显示歌词",
+                systemImage: model.lyricsInMenuBar ? "checkmark" : ""
+            )
+        }
+
         if model.needsAutomationPermission {
             Button("打开自动化权限设置…") {
                 model.openAutomationSettings()

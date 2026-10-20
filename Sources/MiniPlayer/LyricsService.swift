@@ -18,7 +18,7 @@ enum LyricsService {
         let lyrics: Lyrics
     }
 
-    private static let cacheVersion = 6
+    private static let cacheVersion = 7
 
     private static let cacheDirectory: URL = {
         let dir = MusicService.cacheRoot.appendingPathComponent("lyrics", isDirectory: true)
@@ -343,12 +343,10 @@ enum LyricsService {
         return copy
     }
 
-    /// Use Apple/NetEase translations only for non-Latin originals.
-    /// English songs should keep their English lyrics.
+    /// Keep the original lyric line; translated lines must not replace the
+    /// Korean/Japanese source text.
     static func shouldUseTranslation(original: String, translation: String) -> Bool {
-        guard !translation.isEmpty else { return false }
-        guard !containsLatinLetters(original) else { return false }
-        return containsCJK(translation)
+        false
     }
 
     static func containsLatinLetters(_ text: String) -> Bool {

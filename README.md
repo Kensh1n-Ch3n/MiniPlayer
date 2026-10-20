@@ -4,10 +4,10 @@
 
 # 音乐小窗 · MiniPlayer
 
-**给 macOS Apple Music 的悬浮播放器，加上一行刚刚好的桌面歌词。**
+**给 macOS Apple Music 的悬浮播放器，加上刚刚好的桌面歌词和菜单栏歌词。**
 
 <p>
-  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.1.3-blueviolet?style=flat-square"></a>
+  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.1.4-blueviolet?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift">
   <img alt="Liquid Glass" src="https://img.shields.io/badge/UI-Liquid%20Glass-8A2BE2?style=flat-square">
@@ -39,11 +39,12 @@
 - **完整播放控制**：收藏、上一首、播放 / 暂停、下一首；进度条支持点击和拖动跳转。
 - **原生交互反馈**：播放/暂停图标缩放切换，上一首/下一首朝对应方向滑出再滑入；连续点击时控制命令串行执行，不会出现状态错乱。
 - **点封面打开 Apple Music**：点击专辑封面会打开 / 唤起 Music，同时隐藏小组件。Music 窗口与小组件互斥，关闭 Music 窗口、最小化或退出后小组件自动回来。
-- **单行桌面歌词**：只显示当前这一句，不显示上下句；点击卡片右下角的歌词按钮即可开关。
+- **单行桌面歌词**：只显示当前这一句，不显示上下句；窗口宽度会根据歌词长度动态调整，短句更窄、长句自动加宽，方便左右拖动；点击卡片右下角的歌词按钮即可开关。
+- **菜单栏歌词**：菜单栏显示当前歌词，长句平滑横向滚动，滚完整句后停止，不循环；换句时上下滑动。按住 `⌘` 拖动歌词项可调整它在菜单栏中的位置。
 - **直接拖动歌词**：鼠标移到桌面歌词文字上会变成手形，按住文字本身即可移动，松手自动保存。不需要菜单或额外图标。
 - **歌词对齐**：优先读取 Apple Music 本地缓存的官方逐行 TTML，使用 Apple 自己的时间轴；默认偏置 0。
 - **歌词回退**：没有官方缓存时依次尝试 LRCLIB 同步 LRC、网易云 LRC，最后才使用内嵌歌词 / 时间估算。
-- **中文体验**：繁体歌词自动转简体；英文歌保留英文原文，不套中文翻译。
+- **原文优先**：繁体中文自动转简体；英文、韩文、日文保留原文，不再被中文翻译覆盖。韩文歌显示韩文，不会整首变成中文。
 - **边界约束**：播放器卡片和桌面歌词都被限制在屏幕可见区域内，拖不出屏幕。
 - **低占用**：播放中开启桌面歌词约 **1.1% CPU**，常驻内存约 **40 MB**。
 
@@ -98,6 +99,8 @@
 | 收起为迷你模式 | 卡片右上角的收起按钮，或菜单栏 → 收起为迷你模式 |
 | 展开完整播放器 | 长条右侧的展开按钮，或菜单栏 → 展开完整播放器 |
 | 显示 / 隐藏桌面歌词 | 卡片右下角歌词按钮，`⌘⇧L` |
+| 显示 / 隐藏菜单栏歌词 | 菜单栏菜单 → 在菜单栏显示歌词 |
+| 调整菜单栏歌词位置 | 按住 `⌘` 拖动菜单栏歌词项 |
 | 移动桌面歌词 | 直接按住歌词文字拖动 |
 | 调整歌词时间 | 菜单栏 → 歌词设置 → 提前 / 延迟 0.2 秒 |
 | 调整歌词字号 / 位置 | 菜单栏 → 歌词设置 |
