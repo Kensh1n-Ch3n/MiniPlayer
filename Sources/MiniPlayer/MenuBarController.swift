@@ -24,6 +24,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     private let resetOffsetItem = NSMenuItem(title: "重置歌词偏移", action: nil, keyEquivalent: "")
     private var fontSizeItems: [NSMenuItem] = []
     private var positionItems: [NSMenuItem] = []
+    private let logoImage = MenuBarGlyph.templateImage()
 
     private override init() {
         statusItem = Self.makeStatusItem(length: 30)
@@ -88,18 +89,15 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             statusItem.button?.image = nil
             statusItem.button?.title = ""
             statusItem.button?.layoutSubtreeIfNeeded()
-            if let button = statusItem.button {
-                lyricsView.frame = button.bounds
-            }
+            lyricsView.frame = NSRect(x: 0, y: 0, width: 120, height: 22)
             lyricsView.start()
         } else {
             lyricsView.stop()
             statusItem.length = 30
             statusItem.button?.title = ""
-            statusItem.button?.image = NSImage(
-                systemSymbolName: PlayerModel.shared.isPlaying ? "waveform" : "music.note",
-                accessibilityDescription: "音乐小窗"
-            )
+            statusItem.button?.image = logoImage
+            statusItem.button?.imagePosition = .imageOnly
+            statusItem.button?.imageScaling = .scaleProportionallyDown
         }
     }
 
@@ -265,6 +263,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
 private final class LyricStatusView: NSView {
     weak var hitTestView: NSView?
+    private let logoWidth: CGFloat = 26
     private var timer: Timer?
     private var currentLine = ""
     private var previousLine: String?
@@ -306,10 +305,14 @@ private final class LyricStatusView: NSView {
             horizontalOffset = 0
         }
 
+        MenuBarGlyph.draw(in: NSRect(x: 3, y: (bounds.height - 16) / 2, width: 16, height: 16), color: .labelColor)
+
+        let textStart = logoWidth
+        let usableWidth = max(20, bounds.width - textStart)
         let padding: CGFloat = 6
         let width = measuredWidth(currentLine)
-        let canScroll = width > bounds.width - padding * 2
-        let maximumOffset = max(0, width - bounds.width + padding * 2)
+        let canScroll = width > usableWidth - padding * 2
+        let maximumOffset = max(0, width - usableWidth + padding * 2)
 
         if canScroll {
             // Pause briefly at the start of each line so the beginning is
@@ -326,10 +329,10 @@ private final class LyricStatusView: NSView {
         if let previousLine {
             progress = min(1, CGFloat((CACurrentMediaTime() - transitionStartedAt) / 0.22))
             let previousWidth = measuredWidth(previousLine)
-            let previousCanScroll = previousWidth > bounds.width - padding * 2
+            let previousCanScroll = previousWidth > usableWidth - padding * 2
             let previousX = previousCanScroll
-                ? padding - previousOffset
-                : (bounds.width - previousWidth) / 2
+                ? textStart + padding - previousOffset
+                : textStart + (usableWidth - previousWidth) / 2
             drawLine(previousLine, x: previousX, y: -progress * bounds.height, alpha: 1 - progress)
             if progress >= 1 {
                 self.previousLine = nil
@@ -338,7 +341,9 @@ private final class LyricStatusView: NSView {
             progress = 1
         }
 
-        let x = canScroll ? padding - horizontalOffset : (bounds.width - width) / 2
+        let x = canScroll
+            ? textStart + padding - horizontalOffset
+            : textStart + (usableWidth - width) / 2
         drawLine(currentLine, x: x, y: (1 - progress) * bounds.height, alpha: 1)
     }
 
@@ -356,5 +361,37 @@ private final class LyricStatusView: NSView {
 
     private func measuredWidth(_ text: String) -> CGFloat {
         (text as NSString).size(withAttributes: [.font: font]).width
+    }
+}
+
+
+@MainActor
+private enum MenuBarGlyph {
+    static func templateImage() -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
+            draw(in: rect, color: .black)
+            return true
+        }
+        image.isTemplate = true
+        return image
+    }
+
+    static func draw(in rect: NSRect, color: NSColor) {
+        let heights: [CGFloat] = [5, 9, 13, 9, 5]
+        let barWidth: CGFloat = 2.2
+        let gap: CGFloat = 1.35
+        let totalWidth = CGFloat(heights.count) * barWidth + CGFloat(heights.count - 1) * gap
+        var x = rect.midX - totalWidth / 2
+        color.setFill()
+        for height in heights {
+            let bar = NSRect(
+                x: x,
+                y: rect.midY - height / 2,
+                width: barWidth,
+                height: height
+            )
+            NSBezierPath(roundedRect: bar, xRadius: barWidth / 2, yRadius: barWidth / 2).fill()
+            x += barWidth + gap
+        }
     }
 }
