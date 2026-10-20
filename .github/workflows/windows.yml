@@ -1,0 +1,26 @@
+name: Windows Build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "windows/**"
+      - ".github/workflows/windows.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Publish
+        run: dotnet publish windows/MiniPlayerWin.csproj -c Release -r win-x64 --self-contained true -o publish
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path publish/* -DestinationPath MiniPlayerWin-win-x64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MiniPlayerWin-win-x64
+          path: MiniPlayerWin-win-x64.zip

@@ -1,16 +1,17 @@
 <div align="center">
 
-<img src="docs/banner.png" alt="MiniPlayer for Apple Music" width="100%">
+<img src="macos/docs/banner.png" alt="MiniPlayer for macOS and Windows" width="100%">
 
 # MiniPlayer for Apple Music
 
-**A floating macOS player for Apple Music and NetEase Cloud Music, with desktop and menu bar lyrics.**
+**A floating player for macOS and Windows: macOS supports Apple Music and NetEase Cloud Music; Windows currently supports NetEase Cloud Music.**
 
 English | [简体中文](README.md)
 
 <p>
-  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.2.1-blueviolet?style=flat-square"></a>
+  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.3.0-blueviolet?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
+  <img alt="Windows" src="https://img.shields.io/badge/Windows-10%2F11-0078D6?style=flat-square&logo=windows">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift">
   <img alt="Liquid Glass" src="https://img.shields.io/badge/UI-Liquid%20Glass-8A2BE2?style=flat-square">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-green?style=flat-square"></a>
@@ -19,12 +20,13 @@ English | [简体中文](README.md)
 </p>
 
 <p>
-  <a href="#-features">Features</a> ·
-  <a href="#-screenshots">Screenshots</a> ·
-  <a href="#-installation">Installation</a> ·
-  <a href="#-usage">Usage</a> ·
+  <a href="#-macos-features">macOS Features</a> ·
+  <a href="#-macos-screenshots">macOS Screenshots</a> ·
+  <a href="#-macos-installation">macOS Installation</a> ·
+  <a href="#-windows-version">Windows Version</a> ·
+  <a href="#-macos-usage">macOS Usage</a> ·
   <a href="#-lyrics-and-sync">Lyrics &amp; Sync</a> ·
-  <a href="#-resource-usage">Resource Usage</a> ·
+  <a href="#-resource-usage--cache">Resource Usage</a> ·
   <a href="#-faq">FAQ</a> ·
   <a href="#-license">License</a> ·
   <a href="#-support-the-author">Support</a>
@@ -34,11 +36,11 @@ English | [简体中文](README.md)
 
 ---
 
-## ✨ Features
+## ✨ macOS Features
 
 - **Two playback sources**: Apple Music and NetEase Cloud Music. The app uses system Now Playing to follow the active player automatically, including track changes, pause/play, lyrics, and artwork.
 - **Native Liquid Glass**: macOS 26+ uses SwiftUI's `.glassEffect(.clear, in:)` for system refraction, blur, and edge highlights; macOS 14–15 falls back to a custom blur.
-- **Mini capsule mode**: collapse the player into a 300×56 capsule with artwork, title, previous / play-pause / next, expand, and a thin progress line. Click the artwork to open Apple Music; hovering shows a highlight and an open arrow.
+- **Mini capsule mode**: double-click empty card space to switch between the full player and the 300×56 capsule. The capsule keeps artwork, title, previous / play-pause / next, lyrics and a thin progress line. Click the artwork to open the active player; hovering shows a highlight and an open arrow.
 - **Full playback controls**: favorite, previous, play / pause, next; the progress bar supports click and drag seeking.
 - **Lightweight transitions**: play/pause and previous/next use directional transition animations for clear feedback.
 - **Artwork interaction**: click the artwork to open the active player. With Apple Music the widget hides; with NetEase it stays visible. Hovering shows an open affordance.
@@ -50,31 +52,31 @@ English | [简体中文](README.md)
 - **On-screen bounds**: the player card and desktop lyrics stay within the visible screen area.
 - **Low overhead**: about **40 MB** resident memory; playback and lyric rendering stay lightweight.
 
-## 📸 Screenshots
+## 📸 macOS Screenshots
 
 <p align="center">
   <b>Full Liquid Glass player</b><br><br>
-  <img src="docs/ui-full.png" alt="Full Liquid Glass player" width="82%">
+  <img src="macos/docs/ui-full.png" alt="Full Liquid Glass player" width="82%">
 </p>
 
 <p align="center">
   <b>Single-line desktop lyrics</b><br><br>
-  <img src="docs/ui-lyrics.png" alt="Single-line desktop lyrics" width="100%">
+  <img src="macos/docs/ui-lyrics.png" alt="Single-line desktop lyrics" width="100%">
 </p>
 
 <p align="center">
   <b>Menu bar lyrics</b><br><br>
-  <img src="docs/ui-menubar.png" alt="Menu bar lyrics" width="100%">
+  <img src="macos/docs/ui-menubar.png" alt="Menu bar lyrics" width="100%">
 </p>
 
 <p align="center">
   <b>Mini capsule mode</b><br><br>
-  <img src="docs/ui-mini.png" alt="Mini capsule mode" width="72%">
+  <img src="macos/docs/ui-mini.png" alt="Mini capsule mode" width="72%">
 </p>
 
 > Native glass samples the windows behind it in real time. A photo or wallpaper behind it produces blurred colors; a white window behind it makes it look white. This is how system glass behaves.
 
-## 🚀 Installation
+## 🚀 macOS Installation
 
 ### Download
 
@@ -96,15 +98,15 @@ Choose **Allow**. If you accidentally choose "Don't Allow", open **Automation Pe
 - Apple Music and/or NetEase Cloud Music
 - Native Liquid Glass requires macOS 26+; older systems automatically use the fallback glass effect
 
-## 🎮 Usage
+## 🎮 macOS Usage
 
 | Action | How |
 | --- | --- |
 | Move the player | Drag the empty top area of the card |
 | Open the active player | Click the album artwork; with Apple Music the widget hides, while with NetEase it stays visible |
 | Show / hide the player | Menu bar music icon, `⌘⇧M` |
-| Collapse to mini mode | Collapse button at the top-right of the card, or menu bar → Collapse to Mini Mode |
-| Expand the full player | Expand button at the right of the capsule, or menu bar → Expand Full Player |
+| Collapse to mini mode | Double-click empty card space, or menu bar → Collapse to Mini Mode |
+| Expand the full player | Double-click empty card space, or menu bar → Expand Full Player |
 | Show / hide desktop lyrics | Lyrics button at the lower-right of the card, `⌘⇧L` |
 | Show / hide menu bar lyrics | Menu bar menu → Show Lyrics in Menu Bar |
 | Reposition menu bar lyrics | Hold `⌘` and drag the menu bar lyric item |
@@ -138,12 +140,12 @@ Lyrics cache directory: `~/Library/Caches/MiniPlayer/lyrics`
 - Lyric cache: `~/Library/Caches/MiniPlayer/lyrics`, capped at about **32 MB**.
 - Caches older than **30 days** are pruned at launch; when a cap is exceeded, the oldest files are removed first.
 
-## 🛠️ Build from Source
+## 🛠️ macOS Build from Source
 
 Requires Xcode 15+ and Swift 5.9+.
 
 ```bash
-cd MiniPlayer
+cd macos
 ./scripts/build.sh
 ```
 
@@ -153,6 +155,26 @@ Build outputs:
 - `dist/MiniPlayer.zip`
 
 The app prefers an available local Apple Development certificate; without one it falls back to ad-hoc signing. It only uses system frameworks and has no third-party runtime dependencies.
+
+## 🪟 Windows Version
+
+The Windows project lives in `windows/` and currently supports **NetEase Cloud Music only**.
+
+- System Media Transport Controls (SMTC) metadata: title, artist, artwork, position, playback state
+- Play/pause, previous, next, seeking
+- Full / mini floating player, single-line desktop lyrics, tray menu
+- DWM Acrylic, rounded corners, translucent gradients and inner highlights for a glass look. It follows the layering approach of [pratikone/liquid-glass-WinUI](https://github.com/pratikone/liquid-glass-WinUI); full Win2D refraction would require a WinUI 3 host, so this Avalonia build is an approximation.
+
+Build from `windows/`:
+
+```bash
+dotnet build -c Release
+dotnet publish -c Release -r win-x64 --self-contained true -o publish/win-x64
+```
+
+The Windows port is experimental and has not yet been run on a Windows machine in this repository. The NetEase client must publish a Windows SMTC session.
+
+Windows build: [MiniPlayerWin-win-x64.zip](https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest/download/MiniPlayerWin-win-x64.zip)
 
 ## ❓ FAQ
 
@@ -179,7 +201,7 @@ This is a local utility without notarization or sandbox adaptation. Public distr
 If MiniPlayer is useful to you, consider buying me a cup of tea. Your support keeps it going.
 
 <p align="center">
-  <img src="docs/alipay-qr.jpg" alt="Alipay QR code" width="300">
+  <img src="macos/docs/alipay-qr.jpg" alt="Alipay QR code" width="300">
 </p>
 
 <p align="center">

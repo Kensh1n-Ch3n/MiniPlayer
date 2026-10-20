@@ -123,17 +123,6 @@ struct MiniPlayerView: View {
                     .padding(.bottom, 8)
             }
         }
-        .overlay(alignment: .topTrailing) {
-            if !isMini {
-                MiniModeButton(
-                    systemName: "minus",
-                    help: "收起为迷你模式",
-                    action: model.toggleMiniMode
-                )
-                .padding(.top, 6)
-                .padding(.trailing, 12)
-            }
-        }
     }
 
     private var fullContent: some View {
@@ -221,10 +210,11 @@ struct MiniPlayerView: View {
             )
 
             MiniModeButton(
-                systemName: "arrow.up.left.and.arrow.down.right",
-                help: "展开完整播放器",
-                action: model.toggleMiniMode
+                systemName: model.lyricsVisible ? "quote.bubble.fill" : "quote.bubble",
+                help: model.lyricsVisible ? "隐藏桌面歌词" : "显示桌面歌词",
+                action: model.toggleLyrics
             )
+
         }
         .padding(.leading, 12)
         .padding(.trailing, 10)

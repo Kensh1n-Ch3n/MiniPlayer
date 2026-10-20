@@ -1,16 +1,17 @@
 <div align="center">
 
-<img src="docs/banner.png" alt="音乐小窗 · MiniPlayer" width="100%">
+<img src="macos/docs/banner.png" alt="音乐小窗 · MiniPlayer for macOS and Windows" width="100%">
 
-# 音乐小窗 · MiniPlayer
+# MiniPlayer
 
-**给 macOS 的悬浮播放器，支持 Apple Music 和网易云音乐，带桌面歌词与菜单栏歌词。**
+**macOS 与 Windows 的悬浮播放器：macOS 支持 Apple Music / 网易云音乐，Windows 先支持网易云音乐。**
 
 [English](README.en.md) | 简体中文
 
 <p>
-  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.2.1-blueviolet?style=flat-square"></a>
+  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.3.0-blueviolet?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
+  <img alt="Windows" src="https://img.shields.io/badge/Windows-10%2F11-0078D6?style=flat-square&logo=windows">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift">
   <img alt="Liquid Glass" src="https://img.shields.io/badge/UI-Liquid%20Glass-8A2BE2?style=flat-square">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-green?style=flat-square"></a>
@@ -19,12 +20,13 @@
 </p>
 
 <p>
-  <a href="#-功能">功能</a> ·
-  <a href="#-界面">界面</a> ·
-  <a href="#-安装">安装</a> ·
-  <a href="#-使用">使用</a> ·
+  <a href="#-macos-功能">macOS 功能</a> ·
+  <a href="#-macos-界面">macOS 界面</a> ·
+  <a href="#-macos-安装">macOS 安装</a> ·
+  <a href="#-windows-版">Windows 版</a> ·
+  <a href="#-macos-使用">macOS 使用</a> ·
   <a href="#-歌词与对齐">歌词与对齐</a> ·
-  <a href="#-资源占用">资源占用</a> ·
+  <a href="#-资源占用与缓存">资源占用与缓存</a> ·
   <a href="#-常见问题">FAQ</a> ·
   <a href="#-license">License</a> ·
   <a href="#-支持作者">支持作者</a>
@@ -34,11 +36,11 @@
 
 ---
 
-## ✨ 功能
+## ✨ macOS 功能
 
 - **双播放器来源**：支持 Apple Music 和网易云音乐。通过系统 Now Playing 自动识别当前播放器，切歌、暂停/播放、歌词和封面显示都会同步。
 - **原生 Liquid Glass**：macOS 26+ 使用 SwiftUI 原生 `.glassEffect(.clear, in:)`，由系统完成折射、模糊和边缘高光；macOS 14–15 回退到自定义虚化。
-- **迷你长条模式**：播放器右上角一键收起为 300×56 的胶囊长条，保留封面、歌曲名、上一首 / 播放 / 下一首、展开按钮和一条细进度线；点击封面会打开 Apple Music，悬停时封面会高亮并显示打开箭头。
+- **迷你长条模式**：双击卡片空白处可在完整播放器和 300×56 胶囊长条之间切换；长条保留封面、歌曲名、上一首 / 播放 / 下一首、歌词按钮和一条细进度线；点击封面会打开当前播放器，悬停时封面会高亮并显示打开箭头。
 - **完整播放控制**：收藏、上一首、播放 / 暂停、下一首；进度条支持点击和拖动跳转。
 - **轻量切换动效**：播放/暂停、上一首/下一首带有方向感切换动画，操作响应清晰。
 - **封面交互**：点击专辑封面打开当前播放器；Apple Music 下会隐藏卡片，网易云音乐下卡片保留。悬停封面会显示打开提示。
@@ -50,31 +52,31 @@
 - **屏幕内约束**：播放器卡片和桌面歌词都限制在屏幕可见区域内。
 - **低占用**：常驻内存约 **40 MB**，播放和歌词滚动保持轻量。
 
-## 📸 界面
+## 📸 macOS 界面
 
 <p align="center">
   <b>Liquid Glass 完整播放器</b><br><br>
-  <img src="docs/ui-full.png" alt="Liquid Glass 完整播放器" width="82%">
+  <img src="macos/docs/ui-full.png" alt="Liquid Glass 完整播放器" width="82%">
 </p>
 
 <p align="center">
   <b>单行桌面歌词</b><br><br>
-  <img src="docs/ui-lyrics.png" alt="单行桌面歌词" width="100%">
+  <img src="macos/docs/ui-lyrics.png" alt="单行桌面歌词" width="100%">
 </p>
 
 <p align="center">
   <b>菜单栏歌词</b><br><br>
-  <img src="docs/ui-menubar.png" alt="菜单栏歌词" width="100%">
+  <img src="macos/docs/ui-menubar.png" alt="菜单栏歌词" width="100%">
 </p>
 
 <p align="center">
   <b>迷你长条模式</b><br><br>
-  <img src="docs/ui-mini.png" alt="迷你长条模式" width="72%">
+  <img src="macos/docs/ui-mini.png" alt="迷你长条模式" width="72%">
 </p>
 
 > 原生玻璃会实时采样组件背后的窗口内容。背后是照片或壁纸时会显示被虚化的颜色；背后是白色窗口时偏白，这是系统玻璃的真实行为。
 
-## 🚀 安装
+## 🚀 macOS 安装
 
 ### 直接使用
 
@@ -96,15 +98,15 @@
 - Apple Music 和/或 网易云音乐
 - 原生 Liquid Glass 需要 macOS 26+；旧系统会自动使用回退玻璃效果
 
-## 🎮 使用
+## 🎮 macOS 使用
 
 | 操作 | 方式 |
 | --- | --- |
 | 移动播放器 | 按住卡片顶部空白区域拖动 |
 | 打开当前播放器 | 点击专辑封面；Apple Music 下小组件会隐藏，网易云音乐下保持显示 |
 | 显示 / 隐藏播放器 | 菜单栏音符图标，`⌘⇧M` |
-| 收起为迷你模式 | 卡片右上角的收起按钮，或菜单栏 → 收起为迷你模式 |
-| 展开完整播放器 | 长条右侧的展开按钮，或菜单栏 → 展开完整播放器 |
+| 收起为迷你模式 | 双击卡片空白处，或菜单栏 → 收起为迷你模式 |
+| 展开完整播放器 | 双击卡片空白处，或菜单栏 → 展开完整播放器 |
 | 显示 / 隐藏桌面歌词 | 卡片右下角歌词按钮，`⌘⇧L` |
 | 显示 / 隐藏菜单栏歌词 | 菜单栏菜单 → 在菜单栏显示歌词 |
 | 调整菜单栏歌词位置 | 按住 `⌘` 拖动菜单栏歌词项 |
@@ -138,12 +140,12 @@
 - 歌词缓存：`~/Library/Caches/MiniPlayer/lyrics`，上限约 **32 MB**。
 - 启动时自动清理 **30 天**前的缓存；超过大小上限时从最旧文件开始清理。
 
-## 🛠️ 从源码构建
+## 🛠️ macOS 从源码构建
 
 要求 Xcode 15+、Swift 5.9+。
 
 ```bash
-cd MiniPlayer
+cd macos
 ./scripts/build.sh
 ```
 
@@ -153,6 +155,26 @@ cd MiniPlayer
 - `dist/MiniPlayer.zip`
 
 App 会优先使用本机可用的 Apple Development 证书签名；没有证书时回退 ad-hoc 签名。项目依赖系统框架，无第三方运行时依赖。
+
+## 🪟 Windows 版
+
+Windows 工程位于 `windows/`，当前**先只支持网易云音乐**。
+
+- 通过 Windows SMTC 读取网易云的歌曲、歌手、封面、进度和播放状态；
+- 播放 / 暂停、上一首、下一首、进度跳转；
+- 完整 / 迷你悬浮卡片、桌面单行歌词、系统托盘；
+- 使用 DWM Acrylic + 圆角 + 半透明渐变和内层高光模拟玻璃质感。参考了 [pratikone/liquid-glass-WinUI](https://github.com/pratikone/liquid-glass-WinUI) 的玻璃分层思路；完整 Win2D 折射需要 WinUI 3 host，当前 Avalonia 版是近似实现。
+
+在 `windows/` 下构建：
+
+```bash
+dotnet build -c Release
+dotnet publish -c Release -r win-x64 --self-contained true -o publish/win-x64
+```
+
+当前 Windows 版是实验性移植，尚未在 Windows 机器上运行验证；使用网易云客户端时需确保它向 Windows 暴露 SMTC 媒体会话。
+
+Windows 安装包：[MiniPlayerWin-win-x64.zip](https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest/download/MiniPlayerWin-win-x64.zip)
 
 ## ❓ 常见问题
 
@@ -179,7 +201,7 @@ Apple Music 的脚本接口不暴露逐行时间轴；如果本机没有官方 T
 如果音乐小窗对你有帮助，欢迎请我喝杯茶。你的支持会让它继续更新。
 
 <p align="center">
-  <img src="docs/alipay-qr.jpg" alt="支付宝收款码" width="300">
+  <img src="macos/docs/alipay-qr.jpg" alt="支付宝收款码" width="300">
 </p>
 
 <p align="center">

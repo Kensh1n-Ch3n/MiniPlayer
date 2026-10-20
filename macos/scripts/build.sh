@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+LICENSE_FILE="$(cd "$ROOT/.." && pwd)/LICENSE"
 cd "$ROOT"
 
 CONFIG="${1:-release}"
@@ -26,7 +27,7 @@ cp "$BIN" "$APP/Contents/MacOS/MiniPlayer"
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
 cp "$ROOT/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 cp "$ROOT/Resources/alipay-qr.jpg" "$APP/Contents/Resources/alipay-qr.jpg"
-cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"
+cp "$LICENSE_FILE" "$APP/Contents/Resources/LICENSE.txt"
 chmod +x "$APP/Contents/MacOS/MiniPlayer"
 plutil -lint "$APP/Contents/Info.plist" >/dev/null
 
@@ -45,7 +46,7 @@ codesign --verify --deep --strict "$APP"
 echo "==> Packaging"
 mkdir -p "$ROOT/dist"
 rm -f "$ZIP"
-cp "$ROOT/LICENSE" "$ROOT/dist/LICENSE"
+cp "$LICENSE_FILE" "$ROOT/dist/LICENSE"
 (
   cd "$ROOT/dist"
   zip -r -q "$ZIP" "MiniPlayer.app" "LICENSE"

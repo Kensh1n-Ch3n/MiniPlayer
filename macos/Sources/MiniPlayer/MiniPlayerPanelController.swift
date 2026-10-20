@@ -144,6 +144,12 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
                 return event
             }
 
+            // A double-click on empty card space toggles full / mini mode.
+            if event.clickCount == 2 {
+                PlayerModel.shared.toggleMiniMode()
+                return nil
+            }
+
             panel.performDrag(with: event)
             return nil
         }
@@ -170,7 +176,6 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
                 NSRect(x: 152, y: 12, width: 48, height: 48),
                 NSRect(x: 208, y: 16, width: 40, height: 40),
                 NSRect(x: 296, y: 16, width: 40, height: 40),
-                NSRect(x: 314, y: 138, width: 26, height: 26),
             ]
         }
 

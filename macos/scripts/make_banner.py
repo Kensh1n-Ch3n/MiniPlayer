@@ -36,10 +36,10 @@ small_font = ImageFont.truetype(font_path, 17 * S)
 
 draw = ImageDraw.Draw(canvas)
 draw.text((300 * S, 118 * S), "音乐小窗", font=title_font, fill=(255, 255, 255, 255))
-draw.text((302 * S, 220 * S), "MiniPlayer for Apple Music", font=sub_font, fill=(225, 233, 242, 255))
+draw.text((302 * S, 220 * S), "MiniPlayer for macOS & Windows", font=sub_font, fill=(225, 233, 242, 255))
 
 # Tag pill
-pill_text = "Liquid Glass  ·  桌面歌词  ·  0 偏置对齐"
+pill_text = "Liquid Glass  ·  桌面歌词  ·  macOS / Windows"
 bbox = draw.textbbox((0, 0), pill_text, font=tag_font)
 pw = bbox[2] - bbox[0]
 ph = bbox[3] - bbox[1]
@@ -55,7 +55,7 @@ pd.rounded_rectangle(
 canvas = Image.alpha_composite(canvas, pill)
 draw = ImageDraw.Draw(canvas)
 draw.text((319 * S, 286 * S), pill_text, font=tag_font, fill=(232, 238, 246, 255))
-draw.text((302 * S, 350 * S), "Native glass · Apple Music lyrics · Always on top", font=small_font, fill=(206, 216, 228, 255))
+draw.text((302 * S, 350 * S), "Native glass · Apple Music / NetEase · Always on top", font=small_font, fill=(206, 216, 228, 255))
 
 # Widget product shot (cropped to the card edge, transparent corners)
 shot = Image.open(os.path.join(ROOT, "docs", "widget-card.png")).convert("RGBA")
