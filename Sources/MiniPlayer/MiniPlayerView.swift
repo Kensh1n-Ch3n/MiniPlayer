@@ -232,7 +232,8 @@ struct MiniPlayerView: View {
                 action: model.toggleMiniMode
             )
         }
-        .padding(.horizontal, 10)
+        .padding(.leading, 12)
+        .padding(.trailing, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
