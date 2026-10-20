@@ -263,7 +263,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
 private final class LyricStatusView: NSView {
     weak var hitTestView: NSView?
-    private let logoWidth: CGFloat = 26
+    private let logoWidth: CGFloat = 22
     private var timer: Timer?
     private var currentLine = ""
     private var previousLine: String?
@@ -305,10 +305,8 @@ private final class LyricStatusView: NSView {
             horizontalOffset = 0
         }
 
-        MenuBarGlyph.draw(in: NSRect(x: 3, y: (bounds.height - 16) / 2, width: 16, height: 16), color: .labelColor)
-
-        let textStart = logoWidth
-        let usableWidth = max(20, bounds.width - textStart)
+        let textStart: CGFloat = 0
+        let usableWidth = max(20, bounds.width - logoWidth)
         let padding: CGFloat = 6
         let width = measuredWidth(currentLine)
         let canScroll = width > usableWidth - padding * 2
@@ -326,6 +324,8 @@ private final class LyricStatusView: NSView {
         }
 
         let progress: CGFloat
+        NSGraphicsContext.saveGraphicsState()
+        NSBezierPath(rect: NSRect(x: 0, y: 0, width: usableWidth, height: bounds.height)).addClip()
         if let previousLine {
             progress = min(1, CGFloat((CACurrentMediaTime() - transitionStartedAt) / 0.22))
             let previousWidth = measuredWidth(previousLine)
@@ -345,6 +345,12 @@ private final class LyricStatusView: NSView {
             ? textStart + padding - horizontalOffset
             : textStart + (usableWidth - width) / 2
         drawLine(currentLine, x: x, y: (1 - progress) * bounds.height, alpha: 1)
+        NSGraphicsContext.restoreGraphicsState()
+
+        MenuBarGlyph.draw(
+            in: NSRect(x: bounds.width - 19, y: (bounds.height - 16) / 2, width: 16, height: 16),
+            color: .labelColor
+        )
     }
 
     private func drawLine(_ text: String, x: CGFloat, y: CGFloat, alpha: CGFloat) {
