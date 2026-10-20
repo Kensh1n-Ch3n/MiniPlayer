@@ -111,18 +111,16 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
         sourceCancellable = PlayerModel.shared.$playbackSource
             .removeDuplicates()
             .receive(on: RunLoop.main)
-            .sink { [weak self] source in
+            .sink { [weak self] _ in
                 guard let self else { return }
-                guard source == .netEaseMusic else {
-                    self.evaluateMusicPresence()
-                    return
+                if self.autoHiddenForMusic, !self.userHidden {
+                    self.autoHiddenForMusic = false
+                    self.musicLaunchGraceUntil = nil
+                    if !self.isVisible {
+                        self.showWindow()
+                    }
                 }
-                self.musicLaunchGraceUntil = nil
-                guard self.autoHiddenForMusic, !self.userHidden else { return }
-                self.autoHiddenForMusic = false
-                if !self.isVisible {
-                    self.showWindow()
-                }
+                self.evaluateMusicPresence()
             }
     }
 
@@ -276,35 +274,10 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     }
 
     private func musicHasVisibleWindow() -> Bool {
-        // NetEase is allowed to stay open alongside the widget; only the
-        // Apple Music window uses the mutual-exclusion behavior.
-        guard PlayerModel.shared.playbackSource == .appleMusic else { return false }
-        guard let music = NSRunningApplication
-            .runningApplications(withBundleIdentifier: "com.apple.Music")
-            .first else {
-            return false
-        }
-
-        let windows = CGWindowListCopyWindowInfo(
-            [.optionOnScreenOnly, .excludeDesktopElements],
-            kCGNullWindowID
-        ) as? [[String: Any]] ?? []
-
-        for window in windows {
-            guard let ownerPID = (window[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
-                  ownerPID == music.processIdentifier,
-                  let layer = (window[kCGWindowLayer as String] as? NSNumber)?.intValue,
-                  layer == 0,
-                  let bounds = window[kCGWindowBounds as String] as? NSDictionary,
-                  let width = (bounds["Width"] as? NSNumber)?.doubleValue,
-                  let height = (bounds["Height"] as? NSNumber)?.doubleValue,
-                  width >= 200,
-                  height >= 100 else {
-                continue
-            }
-            return true
-        }
-        return false
+        // Keep the widget visible when switching between Apple Music and
+        // NetEase, even when the active player's main window is on screen.
+        // Opening a player from the widget still hides the card explicitly.
+        false
     }
 
     // MARK: - Panel lifecycle
