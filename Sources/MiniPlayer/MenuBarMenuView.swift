@@ -33,9 +33,7 @@ struct MenuBarMenuView: View {
         } label: {
             Label(
                 model.isMiniMode ? "展开完整播放器" : "收起为迷你模式",
-                systemImage: model.isMiniMode
-                    ? "arrow.up.left.and.arrow.down.right"
-                    : "arrow.down.right.and.arrow.up.left"
+                systemImage: model.isMiniMode ? "arrow.up.left.and.arrow.down.right" : "minus"
             )
         }
 

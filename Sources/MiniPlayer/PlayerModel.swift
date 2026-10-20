@@ -28,6 +28,10 @@ final class PlayerModel: ObservableObject {
     private var snapshotDate = Date()
     private var currentKey = ""
     private var isRefreshing = false
+    private var pendingControls = 0
+    private var stateRevision = 0
+    private var controlTail: Task<Void, Never>?
+    private var refreshDebounce: DispatchWorkItem?
     private let defaults = UserDefaults.standard
 
     private init() {
@@ -124,12 +128,17 @@ final class PlayerModel: ObservableObject {
     // MARK: - Polling
 
     func refresh() async {
-        guard !isRefreshing else { return }
+        guard !isRefreshing, pendingControls == 0 else { return }
         isRefreshing = true
         defer { isRefreshing = false }
 
+        let revision = stateRevision
         do {
             let fresh = try await MusicService.snapshot()
+            // A control command may have been issued while the snapshot was
+            // in flight. In that case this snapshot is stale and must not
+            // overwrite the optimistic state.
+            guard revision == stateRevision, pendingControls == 0 else { return }
             errorMessage = nil
             needsAutomationPermission = false
 
@@ -225,6 +234,44 @@ final class PlayerModel: ObservableObject {
         }
     }
 
+    // MARK: - Control serialization
+
+    /// Music commands must not overlap: each osascript invocation can otherwise
+    /// observe/apply a different player state and finish out of order.
+    private func performControl(_ operation: @escaping () async throws -> Void) {
+        enqueueControl { [weak self] in
+            do {
+                try await operation()
+            } catch {
+                self?.handle(error)
+            }
+        }
+    }
+
+    private func enqueueControl(_ operation: @escaping () async -> Void) {
+        stateRevision &+= 1
+        pendingControls += 1
+        let previous = controlTail
+        controlTail = Task { @MainActor [weak self] in
+            _ = await previous?.value
+            guard !Task.isCancelled else { return }
+            await operation()
+            self?.pendingControls = max(0, (self?.pendingControls ?? 1) - 1)
+            self?.scheduleRefresh()
+        }
+    }
+
+    private func scheduleRefresh() {
+        refreshDebounce?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            Task { @MainActor in
+                await self?.refresh()
+            }
+        }
+        refreshDebounce = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30, execute: item)
+    }
+
     // MARK: - Controls
 
     func togglePlayPause() {
@@ -234,46 +281,29 @@ final class PlayerModel: ObservableObject {
         }
 
         let wasPlaying = snap.state == .playing
+        let shouldPlay = !wasPlaying
         let now = estimatedPosition()
         snap.position = now
-        snap.state = wasPlaying ? .paused : .playing
+        snap.state = shouldPlay ? .playing : .paused
         snapshot = snap
         snapshotDate = Date()
 
-        Task { [weak self] in
-            do {
-                try await MusicService.playPause()
-            } catch {
-                self?.handle(error)
-            }
-            try? await Task.sleep(nanoseconds: 220_000_000)
-            await self?.refresh()
+        performControl {
+            try await MusicService.setPlayback(shouldPlay)
         }
     }
 
     func nextTrack() {
         guard hasTrack else { return }
-        Task { [weak self] in
-            do {
-                try await MusicService.nextTrack()
-            } catch {
-                self?.handle(error)
-            }
-            try? await Task.sleep(nanoseconds: 220_000_000)
-            await self?.refresh()
+        performControl {
+            try await MusicService.nextTrack()
         }
     }
 
     func previousTrack() {
         guard hasTrack else { return }
-        Task { [weak self] in
-            do {
-                try await MusicService.previousTrack()
-            } catch {
-                self?.handle(error)
-            }
-            try? await Task.sleep(nanoseconds: 220_000_000)
-            await self?.refresh()
+        performControl {
+            try await MusicService.previousTrack()
         }
     }
 
@@ -285,14 +315,8 @@ final class PlayerModel: ObservableObject {
         snapshotDate = Date()
         seekGeneration += 1
 
-        Task { [weak self] in
-            do {
-                try await MusicService.seek(to: target)
-            } catch {
-                self?.handle(error)
-            }
-            try? await Task.sleep(nanoseconds: 200_000_000)
-            await self?.refresh()
+        performControl {
+            try await MusicService.seek(to: target)
         }
     }
 
@@ -301,14 +325,8 @@ final class PlayerModel: ObservableObject {
         snap.favorited.toggle()
         snapshot = snap
 
-        Task { [weak self] in
-            do {
-                try await MusicService.setFavorited(snap.favorited)
-            } catch {
-                self?.handle(error)
-            }
-            try? await Task.sleep(nanoseconds: 180_000_000)
-            await self?.refresh()
+        performControl {
+            try await MusicService.setFavorited(snap.favorited)
         }
     }
 

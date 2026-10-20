@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 enum MiniMetrics {
@@ -32,6 +33,16 @@ enum MiniMetrics {
     }
 }
 
+private extension View {
+    /// A soft falloff only (no hard outline), so white glyphs stay readable
+    /// without making the glass look outlined.
+    func glassReadableShadow(_ intensity: Double = 1) -> some View {
+        self
+            .shadow(color: .black.opacity(0.60 * intensity), radius: 2.5, y: 1)
+            .shadow(color: .black.opacity(0.30 * intensity), radius: 8, y: 2)
+    }
+}
+
 struct MiniPlayerView: View {
     @EnvironmentObject private var model: PlayerModel
     @State private var dragFraction: Double?
@@ -47,21 +58,37 @@ struct MiniPlayerView: View {
         card
             .frame(width: cardSize.width, height: cardSize.height)
             .modifier(NativeGlassModifier(cornerRadius: cardCornerRadius))
+            .saturation(1.25)
             .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                     .strokeBorder(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.72),
-                                Color.white.opacity(0.22),
-                                Color.white.opacity(0.38)
+                                Color.white.opacity(0.52),
+                                Color.white.opacity(0.14),
+                                Color.white.opacity(0.26)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1.8
+                        lineWidth: 1.4
                     )
+            }
+            .overlay {
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.035),
+                        Color.clear,
+                        Color.clear,
+                        Color.white.opacity(0.018)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
+                .blendMode(.plusLighter)
+                .allowsHitTesting(false)
             }
             .padding(MiniMetrics.shadowPadding)
             .frame(width: windowSize.width, height: windowSize.height)
@@ -71,27 +98,7 @@ struct MiniPlayerView: View {
     private var card: some View {
         ZStack {
             if #unavailable(macOS 26.0) {
-                BackdropBlurView(radius: 36)
-                Color.black.opacity(0.20)
-                LinearGradient(
-                    colors: [
-                        Color.white.opacity(0.03),
-                        Color.clear,
-                        Color.black.opacity(0.12)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                RadialGradient(
-                    colors: [
-                        model.accentColor.opacity(0.10),
-                        Color.clear
-                    ],
-                    center: .topLeading,
-                    startRadius: 0,
-                    endRadius: 430
-                )
-                .blendMode(.plusLighter)
+                VisualEffectView(material: .underWindowBackground, blendingMode: .behindWindow, state: .active)
             }
 
             if isMini {
@@ -109,7 +116,7 @@ struct MiniPlayerView: View {
         }
         .overlay(alignment: .top) {
             Capsule()
-                .fill(Color.white.opacity(0.28))
+                .fill(Color.white.opacity(0.18))
                 .frame(width: isMini ? 96 : MiniMetrics.cardWidth * 0.38, height: 1)
                 .blur(radius: 0.4)
                 .padding(.top, 0.5)
@@ -118,8 +125,19 @@ struct MiniPlayerView: View {
         .overlay(alignment: .bottom) {
             if isMini {
                 miniProgressLine
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 5)
+                    .padding(.horizontal, 30)
+                    .padding(.bottom, 8)
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if !isMini {
+                MiniModeButton(
+                    systemName: "minus",
+                    help: "收起为迷你模式",
+                    action: model.toggleMiniMode
+                )
+                .padding(.top, 6)
+                .padding(.trailing, 12)
             }
         }
     }
@@ -132,62 +150,75 @@ struct MiniPlayerView: View {
             progressSection
                 .frame(height: 14)
             controls
-                .frame(height: 50)
+                .frame(height: 56)
         }
         .padding(.horizontal, 16)
         .padding(.top, 16)
-        .padding(.bottom, 14)
+        .padding(.bottom, 8)
     }
 
     private var miniContent: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 6) {
             Button {
                 MiniPlayerPanelController.shared.hideAndOpenMusic()
             } label: {
                 AlbumArtworkView(
                     image: model.artwork,
-                    size: 34,
-                    cornerRadius: 17
+                    size: 32,
+                    cornerRadius: 16
                 )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(SoftPressButtonStyle())
             .help("打开 Apple Music")
             .accessibilityLabel("打开 Apple Music")
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(model.displayTitle)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 12.5, weight: .semibold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                    .shadow(color: .black.opacity(0.46), radius: 5, y: 1)
+                    .glassReadableShadow()
 
                 Text(model.displaySubtitle)
-                    .font(.system(size: 10, weight: .regular))
+                    .font(.system(size: 9.5, weight: .regular))
                     .foregroundStyle(.white.opacity(0.72))
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    .shadow(color: .black.opacity(0.42), radius: 4, y: 1)
+                    .glassReadableShadow(0.9)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
             .allowsHitTesting(false)
 
-            AudioBarsView(isPlaying: model.isPlaying)
-                .frame(width: 26, height: 18)
-                .opacity(0.82)
+            MiniTrackButton(
+                systemName: "backward.fill",
+                help: "上一首",
+                disabled: !model.hasTrack,
+                slideDirection: -1,
+                action: model.previousTrack
+            )
 
             MiniPlayPauseButton(
                 isPlaying: model.isPlaying,
                 action: model.togglePlayPause
             )
 
+            MiniTrackButton(
+                systemName: "forward.fill",
+                help: "下一首",
+                disabled: !model.hasTrack,
+                slideDirection: 1,
+                action: model.nextTrack
+            )
+
             MiniModeButton(
-                systemName: "chevron.up",
+                systemName: "arrow.up.left.and.arrow.down.right",
                 help: "展开完整播放器",
                 action: model.toggleMiniMode
             )
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(WindowDragHandle())
     }
@@ -213,6 +244,7 @@ struct MiniPlayerView: View {
         }
         .frame(height: 2)
         .opacity(model.hasTrack ? 1 : 0.45)
+        .shadow(color: .black.opacity(0.55), radius: 2, y: 1)
         .allowsHitTesting(false)
     }
 
@@ -236,7 +268,7 @@ struct MiniPlayerView: View {
                     }
                     .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(SoftPressButtonStyle())
             .onHover { hoveringArtwork = $0 }
             .help("打开 Apple Music")
             .accessibilityLabel("打开 Apple Music")
@@ -247,7 +279,7 @@ struct MiniPlayerView: View {
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
-                    .shadow(color: .black.opacity(0.46), radius: 6, y: 1)
+                    .glassReadableShadow()
 
                 HStack(spacing: 5) {
                     if model.needsAutomationPermission {
@@ -261,22 +293,14 @@ struct MiniPlayerView: View {
                         .lineLimit(1)
                         .truncationMode(.tail)
                 }
-                .shadow(color: .black.opacity(0.42), radius: 4, y: 1)
+                .glassReadableShadow(0.9)
 
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: 6) {
-                AudioBarsView(isPlaying: model.isPlaying)
-                    .frame(width: 28, height: 24, alignment: .trailing)
-                    .padding(.top, 1)
-
-                MiniModeButton(
-                    systemName: "chevron.down",
-                    help: "收起为迷你模式",
-                    action: model.toggleMiniMode
-                )
-            }
+            AudioBarsView(isPlaying: model.isPlaying)
+                .frame(width: 28, height: 24, alignment: .trailing)
+                .padding(.top, 1)
         }
     }
 
@@ -297,7 +321,7 @@ struct MiniPlayerView: View {
                 .font(.system(size: 10.5, weight: .medium))
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.96))
-                .shadow(color: .black.opacity(0.65), radius: 4, y: 1)
+                .glassReadableShadow(0.9)
                 .frame(width: 34, alignment: .leading)
 
             GeometryReader { proxy in
@@ -329,7 +353,7 @@ struct MiniPlayerView: View {
                 .font(.system(size: 10.5, weight: .medium))
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.88))
-                .shadow(color: .black.opacity(0.65), radius: 4, y: 1)
+                .glassReadableShadow(0.9)
                 .frame(width: 38, alignment: .trailing)
         }
         .opacity(model.hasTrack ? 1 : 0.55)
@@ -387,6 +411,7 @@ struct MiniPlayerView: View {
                     size: 22,
                     help: "上一首",
                     disabled: !model.hasTrack,
+                    slideDirection: -1,
                     action: model.previousTrack
                 )
 
@@ -397,6 +422,7 @@ struct MiniPlayerView: View {
                     size: 22,
                     help: "下一首",
                     disabled: !model.hasTrack,
+                    slideDirection: 1,
                     action: model.nextTrack
                 )
             }
@@ -418,7 +444,7 @@ struct MiniPlayerView: View {
                     systemName: model.lyricsVisible ? "quote.bubble.fill" : "quote.bubble",
                     size: 20,
                     active: model.lyricsVisible,
-                    activeColor: model.accentColor,
+                    activeColor: .white,
                     help: model.lyricsVisible ? "隐藏桌面歌词" : "显示桌面歌词",
                     action: model.toggleLyrics
                 )
@@ -486,28 +512,51 @@ private struct PlayerIconButton: View {
     var activeColor: Color = .white
     var help: String?
     var disabled = false
+    var slideDirection: CGFloat?
     let action: () -> Void
 
     @State private var hovering = false
+    @State private var slideOffset: CGFloat = 0
+    @State private var slideOpacity: Double = 1
+    @State private var slideTask: Task<Void, Never>?
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            if let direction = slideDirection, !disabled {
+                slideTask?.cancel()
+                withAnimation(.easeIn(duration: 0.09)) {
+                    slideOffset = direction * 9
+                    slideOpacity = 0
+                }
+                slideTask = Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 90_000_000)
+                    guard !Task.isCancelled else { return }
+                    slideOffset = -direction * 9
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        slideOffset = 0
+                        slideOpacity = 1
+                    }
+                }
+            }
+            action()
+        } label: {
             Image(systemName: systemName)
                 .font(.system(size: size, weight: .semibold))
                 .foregroundStyle(active ? activeColor : Color.white.opacity(disabled ? 0.3 : 0.95))
-                .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
+                .glassReadableShadow(0.9)
+                .offset(x: slideOffset)
+                .opacity(slideOpacity)
                 .frame(width: 40, height: 40)
-                .background(
-                    Circle()
-                        .fill(Color.white.opacity(hovering && !disabled ? 0.13 : 0.001))
-                )
-                .contentShape(Circle())
+                .contentShape(Rectangle())
+                .scaleEffect(hovering && !disabled ? 1.08 : 1)
+                .opacity(disabled ? 0.92 : (hovering ? 1 : 0.94))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SoftPressButtonStyle())
         .disabled(disabled)
         .help(help ?? "")
         .onHover { hovering = $0 }
-        .animation(.easeOut(duration: 0.15), value: hovering)
+        .animation(.easeOut(duration: 0.14), value: hovering)
+        .onDisappear { slideTask?.cancel() }
     }
 }
 
@@ -520,31 +569,43 @@ private struct PlayPauseButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                .font(.system(size: isPlaying ? 28 : 26, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(disabled ? 0.35 : 0.98))
-                .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
-                .offset(x: isPlaying ? 0 : 1.5)
-                .frame(width: 48, height: 48)
-                .background(
-                    Circle()
-                        .fill(Color.white.opacity(hovering ? 0.13 : 0.001))
-                )
-                .overlay {
-                    Circle()
-                        .strokeBorder(Color.white.opacity(hovering ? 0.16 : 0.0), lineWidth: 1)
-                }
-                .contentShape(Circle())
+            ZStack {
+                Image(systemName: "play.fill")
+                    .font(.system(size: 26, weight: .semibold))
+                    .offset(x: 1.5)
+                    .opacity(isPlaying ? 0 : 1)
+                    .scaleEffect(isPlaying ? 0.55 : 1)
+
+                Image(systemName: "pause.fill")
+                    .font(.system(size: 28, weight: .semibold))
+                    .opacity(isPlaying ? 1 : 0)
+                    .scaleEffect(isPlaying ? 1 : 0.55)
+            }
+            .foregroundStyle(Color.white.opacity(disabled ? 0.35 : 0.98))
+            .glassReadableShadow(0.9)
+            .frame(width: 48, height: 48)
+            .contentShape(Rectangle())
+            .scaleEffect(hovering ? 1.06 : 1)
+            .opacity(hovering ? 1 : 0.96)
+            .animation(.easeInOut(duration: 0.18), value: isPlaying)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SoftPressButtonStyle())
         .disabled(disabled)
         .help(isPlaying ? "暂停" : "播放")
         .onHover { hovering = $0 }
-        .animation(.easeOut(duration: 0.15), value: hovering)
+        .animation(.easeOut(duration: 0.14), value: hovering)
     }
 }
 
 
+
+private struct SoftPressButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.65 : 1)
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+    }
+}
 
 private struct MiniModeButton: View {
     let systemName: String
@@ -556,20 +617,18 @@ private struct MiniModeButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(Color.white.opacity(0.82))
-                .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
-                .frame(width: 24, height: 24)
-                .background(
-                    Circle()
-                        .fill(Color.white.opacity(hovering ? 0.14 : 0.02))
-                )
-                .contentShape(Circle())
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(Color.white.opacity(0.94))
+                .glassReadableShadow(0.85)
+                .frame(width: 26, height: 26)
+                .contentShape(Rectangle())
+                .scaleEffect(hovering ? 1.12 : 1)
+                .opacity(hovering ? 1 : 0.9)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SoftPressButtonStyle())
         .help(help)
         .onHover { hovering = $0 }
-        .animation(.easeOut(duration: 0.15), value: hovering)
+        .animation(.easeOut(duration: 0.14), value: hovering)
     }
 }
 
@@ -581,21 +640,81 @@ private struct MiniPlayPauseButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(0.96))
-                .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
-                .offset(x: isPlaying ? 0 : 0.8)
-                .frame(width: 30, height: 30)
-                .background(
-                    Circle()
-                        .fill(Color.white.opacity(hovering ? 0.14 : 0.02))
-                )
-                .contentShape(Circle())
+            ZStack {
+                Image(systemName: "play.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .offset(x: 0.8)
+                    .opacity(isPlaying ? 0 : 1)
+                    .scaleEffect(isPlaying ? 0.55 : 1)
+
+                Image(systemName: "pause.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .opacity(isPlaying ? 1 : 0)
+                    .scaleEffect(isPlaying ? 1 : 0.55)
+            }
+            .foregroundStyle(Color.white.opacity(0.96))
+            .glassReadableShadow(0.85)
+            .frame(width: 28, height: 28)
+            .contentShape(Rectangle())
+            .scaleEffect(hovering ? 1.12 : 1)
+            .opacity(hovering ? 1 : 0.94)
+            .animation(.easeInOut(duration: 0.16), value: isPlaying)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SoftPressButtonStyle())
         .help(isPlaying ? "暂停" : "播放")
         .onHover { hovering = $0 }
-        .animation(.easeOut(duration: 0.15), value: hovering)
+        .animation(.easeOut(duration: 0.14), value: hovering)
+    }
+}
+
+private struct MiniTrackButton: View {
+    let systemName: String
+    let help: String
+    let disabled: Bool
+    var slideDirection: CGFloat?
+    let action: () -> Void
+
+    @State private var hovering = false
+    @State private var slideOffset: CGFloat = 0
+    @State private var slideOpacity: Double = 1
+    @State private var slideTask: Task<Void, Never>?
+
+    var body: some View {
+        Button {
+            if let direction = slideDirection, !disabled {
+                slideTask?.cancel()
+                withAnimation(.easeIn(duration: 0.08)) {
+                    slideOffset = direction * 7
+                    slideOpacity = 0
+                }
+                slideTask = Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 80_000_000)
+                    guard !Task.isCancelled else { return }
+                    slideOffset = -direction * 7
+                    withAnimation(.easeOut(duration: 0.13)) {
+                        slideOffset = 0
+                        slideOpacity = 1
+                    }
+                }
+            }
+            action()
+        } label: {
+            Image(systemName: systemName)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(disabled ? 0.3 : 0.92))
+                .glassReadableShadow(0.85)
+                .offset(x: slideOffset)
+                .opacity(slideOpacity)
+                .frame(width: 24, height: 24)
+                .contentShape(Rectangle())
+                .scaleEffect(hovering && !disabled ? 1.14 : 1)
+                .opacity(disabled ? 0.9 : (hovering ? 1 : 0.92))
+        }
+        .buttonStyle(SoftPressButtonStyle())
+        .disabled(disabled)
+        .help(help)
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.14), value: hovering)
+        .onDisappear { slideTask?.cancel() }
     }
 }

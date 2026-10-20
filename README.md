@@ -7,7 +7,7 @@
 **给 macOS Apple Music 的悬浮播放器，加上一行刚刚好的桌面歌词。**
 
 <p>
-  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.1.0-blueviolet?style=flat-square"></a>
+  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.1.1-blueviolet?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift">
   <img alt="Liquid Glass" src="https://img.shields.io/badge/UI-Liquid%20Glass-8A2BE2?style=flat-square">
@@ -35,8 +35,9 @@
 ## ✨ 功能
 
 - **原生 Liquid Glass**：macOS 26+ 使用 SwiftUI 原生 `.glassEffect(.clear, in:)`，由系统完成折射、模糊和边缘高光；macOS 14–15 回退到自定义虚化。
-- **迷你长条模式**：播放器右上角一键收起为 300×56 的胶囊长条，只保留封面、歌曲名、播放/暂停和展开按钮；适合不想让组件占太多桌面时使用。
+- **迷你长条模式**：播放器右上角一键收起为 300×56 的胶囊长条，保留封面、歌曲名、上一首 / 播放 / 下一首、展开按钮和一条细进度线；适合不想让组件占太多桌面时使用。
 - **完整播放控制**：收藏、上一首、播放 / 暂停、下一首；进度条支持点击和拖动跳转。
+- **原生交互反馈**：播放/暂停图标缩放切换，上一首/下一首朝对应方向滑出再滑入；连续点击时控制命令串行执行，不会出现状态错乱。
 - **点封面打开 Apple Music**：点击专辑封面会打开 / 唤起 Music，同时隐藏小组件。Music 窗口与小组件互斥，关闭 Music 窗口、最小化或退出后小组件自动回来。
 - **单行桌面歌词**：只显示当前这一句，不显示上下句；点击卡片右下角的歌词按钮即可开关。
 - **直接拖动歌词**：鼠标移到桌面歌词文字上会变成手形，按住文字本身即可移动，松手自动保存。不需要菜单或额外图标。
@@ -49,18 +50,18 @@
 ## 📸 界面
 
 <p align="center">
-  <b>Liquid Glass 悬浮播放器</b><br><br>
-  <img src="docs/widget.png" alt="Liquid Glass 悬浮播放器" width="82%">
+  <b>Liquid Glass 完整播放器</b><br><br>
+  <img src="docs/ui-full.png" alt="Liquid Glass 完整播放器" width="82%">
 </p>
 
 <p align="center">
   <b>单行桌面歌词</b><br><br>
-  <img src="docs/desktop-lyrics.png" alt="单行桌面歌词" width="100%">
+  <img src="docs/ui-lyrics.png" alt="单行桌面歌词" width="100%">
 </p>
 
 <p align="center">
   <b>迷你长条模式</b><br><br>
-  <img src="docs/widget-mini.png" alt="迷你长条模式" width="72%">
+  <img src="docs/ui-mini.png" alt="迷你长条模式" width="72%">
 </p>
 
 > 原生玻璃会实时采样组件背后的窗口内容。背后是照片或壁纸时会显示被虚化的颜色；背后是白色窗口时偏白，这是系统玻璃的真实行为。

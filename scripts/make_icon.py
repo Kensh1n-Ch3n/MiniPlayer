@@ -1,116 +1,134 @@
 from PIL import Image, ImageDraw, ImageFilter
-import math
 import os
 import subprocess
 import tempfile
 
 SIZE = 1024
-SCALE = 4
-S = SIZE * SCALE
-
-
-def rounded_mask(size, radius):
-    mask = Image.new("L", (size, size), 0)
-    draw = ImageDraw.Draw(mask)
-    draw.rounded_rectangle((0, 0, size - 1, size - 1), radius=radius, fill=255)
-    return mask
+SS = 2
+S = SIZE * SS
 
 
 def lerp(a, b, t):
     return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
 
 
+def rounded_mask(size, radius):
+    mask = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(mask).rounded_rectangle(
+        (0, 0, size - 1, size - 1), radius=radius, fill=255
+    )
+    return mask
+
+
 def make_icon():
     canvas = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    pad = int(74 * SCALE)
-    w = int(876 * SCALE)
-    radius = int(212 * SCALE)
+    pad = int(74 * SS)
+    w = int(876 * SS)
+    radius = int(212 * SS)
 
-    # Background gradient.
+    # Bright sky-blue to mint gradient.
     bg = Image.new("RGBA", (w, w), (0, 0, 0, 0))
     px = bg.load()
-    top = (20, 15, 17)
-    mid = (56, 23, 18)
-    bottom = (231, 94, 32)
+    stops = [
+        (0.00, (128, 229, 255)),
+        (0.42, (84, 212, 255)),
+        (0.74, (63, 198, 233)),
+        (1.00, (47, 203, 172)),
+    ]
     for y in range(w):
         t = y / (w - 1)
-        if t < 0.62:
-            color = lerp(top, mid, t / 0.62)
-        else:
-            color = lerp(mid, bottom, (t - 0.62) / 0.38)
+        for i in range(len(stops) - 1):
+            t0, c0 = stops[i]
+            t1, c1 = stops[i + 1]
+            if t0 <= t <= t1:
+                f = (t - t0) / (t1 - t0)
+                color = lerp(c0, c1, f)
+                break
         for x in range(w):
             px[x, y] = color + (255,)
 
-    # Warm sun glow near the bottom.
+    # Soft white and mint light pools.
     glow = Image.new("RGBA", (w, w), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
-    cx, cy, r = int(w * 0.54), int(w * 0.79), int(w * 0.42)
-    for i in range(r, 0, -1):
-        t = i / r
-        alpha = int(145 * (1 - t) ** 2)
-        gd.ellipse((cx - i, cy - i, cx + i, cy + i), fill=(255, 138, 61, alpha))
-    glow = glow.filter(ImageFilter.GaussianBlur(int(14 * SCALE)))
+
+    def pool(cx, cy, r, color, alpha):
+        for i in range(r, 0, -1):
+            a = int(alpha * (1 - i / r) ** 2)
+            gd.ellipse((cx - i, cy - i, cx + i, cy + i), fill=color + (a,))
+
+    pool(int(w * 0.24), int(w * 0.15), int(w * 0.62), (255, 255, 255), 95)
+    pool(int(w * 0.82), int(w * 0.88), int(w * 0.48), (86, 245, 207), 75)
+    glow = glow.filter(ImageFilter.GaussianBlur(int(18 * SS)))
     bg = Image.alpha_composite(bg, glow)
 
-    # Thin horizon line.
-    hz = Image.new("RGBA", (w, w), (0, 0, 0, 0))
-    hd = ImageDraw.Draw(hz)
-    y = int(w * 0.66)
-    hd.line((int(w * 0.08), y, int(w * 0.92), y), fill=(255, 215, 175, 70), width=max(1, int(2 * SCALE)))
-    bg = Image.alpha_composite(bg, hz)
+    # Diagonal glass sheen.
+    sheen = Image.new("RGBA", (w, w), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(sheen)
+    sd.polygon(
+        [(0, 0), (int(w * 0.60), 0), (int(w * 0.17), w), (0, w)],
+        fill=(255, 255, 255, 30),
+    )
+    sheen = sheen.filter(ImageFilter.GaussianBlur(int(32 * SS)))
+    bg = Image.alpha_composite(bg, sheen)
 
-    # White waveform.
+    # White equalizer bars with a soft deep-blue shadow for legibility.
     bars = [0.32, 0.54, 0.82, 0.60, 0.38]
-    bar_w = int(48 * SCALE)
-    gap = int(27 * SCALE)
+    bar_w = int(46 * SS)
+    gap = int(28 * SS)
     total = len(bars) * bar_w + (len(bars) - 1) * gap
     start_x = (w - total) // 2
-    base_y = int(w * 0.55)
-    max_h = int(w * 0.38)
+    base_y = int(w * 0.53)
+    max_h = int(w * 0.37)
 
-    overlay = Image.new("RGBA", (w, w), (0, 0, 0, 0))
-    od = ImageDraw.Draw(overlay)
+    shapes = Image.new("RGBA", (w, w), (0, 0, 0, 0))
+    sh = ImageDraw.Draw(shapes)
     for i, frac in enumerate(bars):
         h = int(max_h * frac)
         x0 = start_x + i * (bar_w + gap)
         y0 = base_y - h // 2
-        od.rounded_rectangle(
-            (x0, y0, x0 + bar_w, y0 + h),
-            radius=bar_w // 2,
-            fill=(255, 255, 255, 243),
+        sh.rounded_rectangle(
+            (x0, y0, x0 + bar_w, y0 + h), radius=bar_w // 2, fill=(255, 255, 255, 248)
         )
-    # Slight soft glow under the bars.
-    glow2 = overlay.filter(ImageFilter.GaussianBlur(int(8 * SCALE)))
-    overlay = Image.alpha_composite(glow2, overlay)
-    bg = Image.alpha_composite(bg, overlay)
 
-    # Inner top highlight.
-    highlight = Image.new("RGBA", (w, w), (0, 0, 0, 0))
-    hld = ImageDraw.Draw(highlight)
-    hld.rounded_rectangle(
-        (int(10 * SCALE), int(10 * SCALE), w - int(10 * SCALE), w - int(10 * SCALE)),
-        radius=radius - int(8 * SCALE),
-        outline=(255, 255, 255, 80),
-        width=max(1, int(2 * SCALE)),
+    bar_shadow = Image.new("RGBA", (w, w), (0, 0, 0, 0))
+    bsd = ImageDraw.Draw(bar_shadow)
+    for i, frac in enumerate(bars):
+        h = int(max_h * frac)
+        x0 = start_x + i * (bar_w + gap)
+        y0 = base_y - h // 2
+        bsd.rounded_rectangle(
+            (x0 + int(2 * SS), y0 + int(7 * SS), x0 + bar_w + int(2 * SS), y0 + h + int(7 * SS)),
+            radius=bar_w // 2,
+            fill=(8, 74, 120, 55),
+        )
+    bar_shadow = bar_shadow.filter(ImageFilter.GaussianBlur(int(8 * SS)))
+    bg = Image.alpha_composite(bg, bar_shadow)
+    bg = Image.alpha_composite(bg, shapes)
+
+    # Fine inner rim.
+    rim = Image.new("RGBA", (w, w), (0, 0, 0, 0))
+    rd = ImageDraw.Draw(rim)
+    rd.rounded_rectangle(
+        (int(9 * SS), int(9 * SS), w - int(9 * SS), w - int(9 * SS)),
+        radius=radius - int(8 * SS),
+        outline=(255, 255, 255, 115),
+        width=max(1, int(2 * SS)),
     )
-    bg = Image.alpha_composite(bg, highlight)
+    bg = Image.alpha_composite(bg, rim)
 
-    # Mask and place on canvas.
-    mask = rounded_mask(w, radius)
-    bg.putalpha(mask)
+    bg.putalpha(rounded_mask(w, radius))
     canvas.alpha_composite(bg, (pad, pad))
 
-    # Subtle soft shadow.
+    # Soft outer shadow.
     shadow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(shadow)
-    sd.rounded_rectangle(
-        (pad + int(8 * SCALE), pad + int(18 * SCALE), pad + w + int(8 * SCALE), pad + w + int(18 * SCALE)),
+    shd = ImageDraw.Draw(shadow)
+    shd.rounded_rectangle(
+        (pad + int(7 * SS), pad + int(17 * SS), pad + w + int(7 * SS), pad + w + int(17 * SS)),
         radius=radius,
-        fill=(0, 0, 0, 90),
+        fill=(0, 0, 0, 70),
     )
-    shadow = shadow.filter(ImageFilter.GaussianBlur(int(20 * SCALE)))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(int(20 * SS)))
     canvas = Image.alpha_composite(shadow, canvas)
-
     return canvas.resize((SIZE, SIZE), Image.LANCZOS)
 
 
@@ -135,16 +153,16 @@ def write_iconset(icon, output_dir):
 def main():
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     resources = os.path.join(root, "Resources")
-    os.makedirs(resources, exist_ok=True)
     icon = make_icon()
     icon.save(os.path.join(resources, "AppIcon-1024.png"))
-
     with tempfile.TemporaryDirectory() as tmp:
         iconset = os.path.join(tmp, "AppIcon.iconset")
         write_iconset(icon, iconset)
-        icns = os.path.join(resources, "AppIcon.icns")
-        subprocess.run(["iconutil", "-c", "icns", iconset, "-o", icns], check=True)
-        print("Wrote", icns)
+        subprocess.run(
+            ["iconutil", "-c", "icns", iconset, "-o", os.path.join(resources, "AppIcon.icns")],
+            check=True,
+        )
+    print("Wrote", os.path.join(resources, "AppIcon.icns"))
 
 
 if __name__ == "__main__":

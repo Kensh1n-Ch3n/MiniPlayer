@@ -110,16 +110,10 @@ enum MusicService {
 
     // MARK: - Controls
 
-    static func playPause() async throws {
-        let script = #"""
-        tell application "Music"
-            if player state is playing then
-                pause
-            else
-                play
-            end if
-        end tell
-        """#
+    static func setPlayback(_ shouldPlay: Bool) async throws {
+        let script = shouldPlay
+            ? #"tell application "Music" to play"#
+            : #"tell application "Music" to pause"#
         _ = try await runScript(script)
     }
 

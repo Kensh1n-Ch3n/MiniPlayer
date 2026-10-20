@@ -64,6 +64,7 @@ final class BackdropBlurNSView: NSView {
            let unmanaged = filterClass.perform(NSSelectorFromString("filterWithName:"), with: "gaussianBlur"),
            let filter = unmanaged.takeUnretainedValue() as? NSObject {
             filter.setValue(radius, forKey: "inputRadius")
+
             layer.filters = [filter]
             return
         }
