@@ -37,6 +37,19 @@ struct TrackSnapshot: Equatable, Sendable {
     }
 
     var isPlaying: Bool { state == .playing }
+
+    /// Fields that the UI presents directly. Playback position changes every
+    /// second and must not cause the whole model (and the menu bar menu) to
+    /// republish while the track is otherwise unchanged.
+    func hasSamePresentation(as other: TrackSnapshot) -> Bool {
+        state == other.state
+            && name == other.name
+            && artist == other.artist
+            && album == other.album
+            && duration == other.duration
+            && persistentID == other.persistentID
+            && favorited == other.favorited
+    }
 }
 
 struct LyricLine: Identifiable, Equatable, Codable, Sendable {

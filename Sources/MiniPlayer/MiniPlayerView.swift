@@ -45,6 +45,7 @@ private extension View {
 
 struct MiniPlayerView: View {
     @EnvironmentObject private var model: PlayerModel
+    @StateObject private var artworkHover = ArtworkHoverState.shared
     @State private var dragFraction: Double?
     @State private var hoveringProgress = false
     @State private var hoveringArtwork = false
@@ -108,13 +109,6 @@ struct MiniPlayerView: View {
             }
         }
         .overlay(alignment: .top) {
-            if !isMini {
-                WindowDragHandle()
-                    .frame(width: 132, height: 28)
-                    .padding(.top, 2)
-            }
-        }
-        .overlay(alignment: .top) {
             Capsule()
                 .fill(Color.white.opacity(0.18))
                 .frame(width: isMini ? 96 : MiniMetrics.cardWidth * 0.38, height: 1)
@@ -168,7 +162,7 @@ struct MiniPlayerView: View {
                         cornerRadius: 16
                     )
                     .overlay {
-                        if model.miniArtworkHovered {
+                        if artworkHover.isHovered {
                             Circle()
                                 .fill(Color.black.opacity(0.24))
                             Image(systemName: "arrow.up.right")
@@ -177,8 +171,8 @@ struct MiniPlayerView: View {
                         }
                     }
                     .contentShape(Circle())
-                    .scaleEffect(model.miniArtworkHovered ? 1.06 : 1)
-                    .animation(.easeOut(duration: 0.14), value: model.miniArtworkHovered)
+                    .scaleEffect(artworkHover.isHovered ? 1.06 : 1)
+                    .animation(.easeOut(duration: 0.14), value: artworkHover.isHovered)
                 }
                 .buttonStyle(SoftPressButtonStyle())
                 .help("打开 Apple Music")
@@ -203,7 +197,6 @@ struct MiniPlayerView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .layoutPriority(1)
             .allowsHitTesting(false)
-            .overlay(WindowDragHandle())
 
             MiniTrackButton(
                 systemName: "backward.fill",
@@ -238,28 +231,30 @@ struct MiniPlayerView: View {
     }
 
     private var miniProgressLine: some View {
-        let duration = model.duration
-        let position = model.estimatedPosition()
-        let fraction: Double = duration > 0
-            ? min(1, max(0, position / duration))
-            : 0
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let duration = model.duration
+            let position = model.estimatedPosition(at: context.date)
+            let fraction: Double = duration > 0
+                ? min(1, max(0, position / duration))
+                : 0
 
-        return GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.white.opacity(0.16))
-
-                if fraction > 0 {
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(model.accentColor.opacity(0.9))
-                        .frame(width: proxy.size.width * fraction)
+                        .fill(Color.white.opacity(0.16))
+
+                    if fraction > 0 {
+                        Capsule()
+                            .fill(model.accentColor.opacity(0.9))
+                            .frame(width: proxy.size.width * fraction)
+                    }
                 }
             }
+            .frame(height: 2)
+            .opacity(model.hasTrack ? 1 : 0.45)
+            .shadow(color: .black.opacity(0.55), radius: 2, y: 1)
+            .allowsHitTesting(false)
         }
-        .frame(height: 2)
-        .opacity(model.hasTrack ? 1 : 0.45)
-        .shadow(color: .black.opacity(0.55), radius: 2, y: 1)
-        .allowsHitTesting(false)
     }
 
     // MARK: - Header
@@ -321,7 +316,13 @@ struct MiniPlayerView: View {
     // MARK: - Progress
 
     private var progressSection: some View {
-        let livePosition = model.estimatedPosition()
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            progressContent(at: context.date)
+        }
+    }
+
+    private func progressContent(at date: Date) -> some View {
+        let livePosition = model.estimatedPosition(at: date)
         let liveFraction: Double = {
             guard model.duration > 0 else { return 0 }
             return min(1, max(0, livePosition / model.duration))

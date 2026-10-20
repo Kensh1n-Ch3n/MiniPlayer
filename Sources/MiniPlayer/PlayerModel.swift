@@ -15,7 +15,6 @@ final class PlayerModel: ObservableObject {
     @Published private(set) var needsAutomationPermission = false
     @Published private(set) var panelVisible = true
     @Published private(set) var isMiniMode = false
-    @Published private(set) var miniArtworkHovered = false
     @Published private(set) var lyricsVisible = false
     @Published private(set) var lyricsEditing = false
     @Published private(set) var lyricsOffset: Double = 0
@@ -155,8 +154,15 @@ final class PlayerModel: ObservableObject {
 
             let key = fresh.cacheKey
             let isNewTrack = key != currentKey
-            snapshot = fresh
-            snapshotDate = Date()
+            let presentationChanged = snapshot.map { !$0.hasSamePresentation(as: fresh) } ?? true
+
+            // Position-only updates are intentionally not published: the
+            // widget estimates the clock from snapshotDate, while avoiding a
+            // 1 Hz rebuild of the MenuBarExtra content (which closes submenus).
+            if presentationChanged {
+                snapshot = fresh
+                snapshotDate = Date()
+            }
 
             if isNewTrack {
                 currentKey = key
@@ -363,11 +369,6 @@ final class PlayerModel: ObservableObject {
         panelVisible = visible
     }
 
-    func setMiniArtworkHovered(_ hovered: Bool) {
-        guard miniArtworkHovered != hovered else { return }
-        miniArtworkHovered = hovered
-    }
-
     func toggleMiniMode() {
         setMiniMode(!isMiniMode)
     }
@@ -446,4 +447,12 @@ final class PlayerModel: ObservableObject {
             errorMessage = error.localizedDescription
         }
     }
+}
+
+
+@MainActor
+final class ArtworkHoverState: ObservableObject {
+    static let shared = ArtworkHoverState()
+    @Published var isHovered = false
+    private init() {}
 }

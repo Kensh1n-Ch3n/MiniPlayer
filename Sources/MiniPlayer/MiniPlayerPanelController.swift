@@ -37,6 +37,7 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     private var musicMonitorTask: Task<Void, Never>?
     private var miniModeCancellable: AnyCancellable?
     private var hoverTask: Task<Void, Never>?
+    private var mouseDownMonitor: Any?
 
     private override init() {
         super.init()
@@ -46,6 +47,7 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     func start() {
         observeMiniMode()
         startHoverMonitor()
+        installDragMonitor()
         ensureMusicMonitor()
         if musicHasVisibleWindow() {
             autoHiddenForMusic = true
@@ -109,6 +111,52 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
             }
     }
 
+    private func installDragMonitor() {
+        guard mouseDownMonitor == nil else { return }
+        mouseDownMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown]) { [weak self] event in
+            guard let self, let panel = self.panel, self.isVisible,
+                  event.window === panel else { return event }
+
+            let point = event.locationInWindow
+            if self.isInteractive(point: point) {
+                return event
+            }
+
+            panel.performDrag(with: event)
+            return nil
+        }
+    }
+
+    private func isInteractive(point: NSPoint) -> Bool {
+        let cardOrigin = NSPoint(x: 8, y: 8) // shadow padding
+        let rects: [NSRect]
+
+        if PlayerModel.shared.isMiniMode {
+            rects = [
+                NSRect(x: 12, y: 12, width: 32, height: 32),
+                NSRect(x: 170, y: 16, width: 24, height: 24),
+                NSRect(x: 200, y: 14, width: 28, height: 28),
+                NSRect(x: 234, y: 16, width: 24, height: 24),
+                NSRect(x: 264, y: 15, width: 26, height: 26),
+            ]
+        } else {
+            rects = [
+                NSRect(x: 16, y: 92, width: 62, height: 62),
+                NSRect(x: 56, y: 60, width: 236, height: 18),
+                NSRect(x: 16, y: 16, width: 40, height: 40),
+                NSRect(x: 104, y: 16, width: 40, height: 40),
+                NSRect(x: 152, y: 12, width: 48, height: 48),
+                NSRect(x: 208, y: 16, width: 40, height: 40),
+                NSRect(x: 296, y: 16, width: 40, height: 40),
+                NSRect(x: 314, y: 138, width: 26, height: 26),
+            ]
+        }
+
+        return rects.contains {
+            $0.offsetBy(dx: cardOrigin.x, dy: cardOrigin.y).contains(point)
+        }
+    }
+
     private func startHoverMonitor() {
         guard hoverTask == nil else { return }
         hoverTask = Task { [weak self] in
@@ -122,16 +170,16 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
 
     private func updateMiniArtworkHover() {
         guard let panel, isVisible, PlayerModel.shared.isMiniMode else {
-            PlayerModel.shared.setMiniArtworkHovered(false)
+            ArtworkHoverState.shared.isHovered = false
             return
         }
         let point = panel.convertPoint(fromScreen: NSEvent.mouseLocation)
-        let artworkRect = NSRect(x: 18, y: 20, width: 32, height: 32)
-        PlayerModel.shared.setMiniArtworkHovered(artworkRect.contains(point))
+        let artworkRect = NSRect(x: 20, y: 20, width: 32, height: 32)
+        ArtworkHoverState.shared.isHovered = artworkRect.contains(point)
     }
 
     private func resizePanel(isMini: Bool, animated: Bool) {
-        PlayerModel.shared.setMiniArtworkHovered(false)
+        ArtworkHoverState.shared.isHovered = false
         guard let panel else { return }
         let targetSize = MiniMetrics.windowSize(isMini: isMini)
         guard abs(panel.frame.width - targetSize.width) > 0.5
@@ -259,7 +307,7 @@ final class MiniPlayerPanelController: NSObject, NSWindowDelegate {
     }
 
     private func hideWindow() {
-        PlayerModel.shared.setMiniArtworkHovered(false)
+        ArtworkHoverState.shared.isHovered = false
         panel?.orderOut(nil)
         isVisible = false
         PlayerModel.shared.setPanelVisible(false)
