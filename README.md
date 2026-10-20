@@ -7,7 +7,7 @@
 **给 macOS Apple Music 的悬浮播放器，加上一行刚刚好的桌面歌词。**
 
 <p>
-  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.1.1-blueviolet?style=flat-square"></a>
+  <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.1.2-blueviolet?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift">
   <img alt="Liquid Glass" src="https://img.shields.io/badge/UI-Liquid%20Glass-8A2BE2?style=flat-square">
@@ -35,7 +35,7 @@
 ## ✨ 功能
 
 - **原生 Liquid Glass**：macOS 26+ 使用 SwiftUI 原生 `.glassEffect(.clear, in:)`，由系统完成折射、模糊和边缘高光；macOS 14–15 回退到自定义虚化。
-- **迷你长条模式**：播放器右上角一键收起为 300×56 的胶囊长条，保留封面、歌曲名、上一首 / 播放 / 下一首、展开按钮和一条细进度线；适合不想让组件占太多桌面时使用。
+- **迷你长条模式**：播放器右上角一键收起为 300×56 的胶囊长条，保留封面、歌曲名、上一首 / 播放 / 下一首、展开按钮和一条细进度线；点击封面同样会打开 Apple Music。
 - **完整播放控制**：收藏、上一首、播放 / 暂停、下一首；进度条支持点击和拖动跳转。
 - **原生交互反馈**：播放/暂停图标缩放切换，上一首/下一首朝对应方向滑出再滑入；连续点击时控制命令串行执行，不会出现状态错乱。
 - **点封面打开 Apple Music**：点击专辑封面会打开 / 唤起 Music，同时隐藏小组件。Music 窗口与小组件互斥，关闭 Music 窗口、最小化或退出后小组件自动回来。

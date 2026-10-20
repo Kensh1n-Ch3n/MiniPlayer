@@ -190,6 +190,7 @@ struct MiniPlayerView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .layoutPriority(1)
             .allowsHitTesting(false)
+            .overlay(WindowDragHandle())
 
             MiniTrackButton(
                 systemName: "backward.fill",
@@ -220,7 +221,6 @@ struct MiniPlayerView: View {
         }
         .padding(.horizontal, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(WindowDragHandle())
     }
 
     private var miniProgressLine: some View {
