@@ -61,21 +61,6 @@ struct MiniPlayerView: View {
             .saturation(1.25)
             .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.52),
-                                Color.white.opacity(0.14),
-                                Color.white.opacity(0.26)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.4
-                    )
-            }
-            .overlay {
                 LinearGradient(
                     colors: [
                         Color.white.opacity(0.035),

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-LICENSE_FILE="$(cd "$ROOT/.." && pwd)/LICENSE"
+LICENSE_FILE="$ROOT/LICENSE"
 cd "$ROOT"
 
 CONFIG="${1:-release}"

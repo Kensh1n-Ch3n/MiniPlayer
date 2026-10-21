@@ -1,17 +1,16 @@
 <div align="center">
 
-<img src="macos/docs/banner.png" alt="音乐小窗 · MiniPlayer for macOS and Windows" width="100%">
+<img src="docs/banner.png" alt="音乐小窗 · MiniPlayer" width="100%">
 
 # MiniPlayer
 
-**macOS 与 Windows 的悬浮播放器：macOS 支持 Apple Music / 网易云音乐，Windows 先支持网易云音乐。**
+**给 macOS 的悬浮播放器，支持 Apple Music 和网易云音乐，带桌面歌词与菜单栏歌词。**
 
 [English](README.en.md) | 简体中文
 
 <p>
   <a href="https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/badge/Release-v1.3.0-blueviolet?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
-  <img alt="Windows" src="https://img.shields.io/badge/Windows-10%2F11-0078D6?style=flat-square&logo=windows">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift">
   <img alt="Liquid Glass" src="https://img.shields.io/badge/UI-Liquid%20Glass-8A2BE2?style=flat-square">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-green?style=flat-square"></a>
@@ -20,11 +19,10 @@
 </p>
 
 <p>
-  <a href="#-macos-功能">macOS 功能</a> ·
-  <a href="#-macos-界面">macOS 界面</a> ·
-  <a href="#-macos-安装">macOS 安装</a> ·
-  <a href="#-windows-版">Windows 版</a> ·
-  <a href="#-macos-使用">macOS 使用</a> ·
+  <a href="#-功能">功能</a> ·
+  <a href="#-界面">界面</a> ·
+  <a href="#-安装">安装</a> ·
+  <a href="#-使用">使用</a> ·
   <a href="#-歌词与对齐">歌词与对齐</a> ·
   <a href="#-资源占用与缓存">资源占用与缓存</a> ·
   <a href="#-常见问题">FAQ</a> ·
@@ -36,7 +34,7 @@
 
 ---
 
-## ✨ macOS 功能
+## ✨ 功能
 
 - **双播放器来源**：支持 Apple Music 和网易云音乐。通过系统 Now Playing 自动识别当前播放器，切歌、暂停/播放、歌词和封面显示都会同步。
 - **原生 Liquid Glass**：macOS 26+ 使用 SwiftUI 原生 `.glassEffect(.clear, in:)`，由系统完成折射、模糊和边缘高光；macOS 14–15 回退到自定义虚化。
@@ -52,31 +50,31 @@
 - **屏幕内约束**：播放器卡片和桌面歌词都限制在屏幕可见区域内。
 - **低占用**：常驻内存约 **40 MB**，播放和歌词滚动保持轻量。
 
-## 📸 macOS 界面
+## 📸 界面
 
 <p align="center">
   <b>Liquid Glass 完整播放器</b><br><br>
-  <img src="macos/docs/ui-full.png" alt="Liquid Glass 完整播放器" width="82%">
+  <img src="docs/ui-full.png" alt="Liquid Glass 完整播放器" width="82%">
 </p>
 
 <p align="center">
   <b>单行桌面歌词</b><br><br>
-  <img src="macos/docs/ui-lyrics.png" alt="单行桌面歌词" width="100%">
+  <img src="docs/ui-lyrics.png" alt="单行桌面歌词" width="100%">
 </p>
 
 <p align="center">
   <b>菜单栏歌词</b><br><br>
-  <img src="macos/docs/ui-menubar.png" alt="菜单栏歌词" width="100%">
+  <img src="docs/ui-menubar.png" alt="菜单栏歌词" width="100%">
 </p>
 
 <p align="center">
   <b>迷你长条模式</b><br><br>
-  <img src="macos/docs/ui-mini.png" alt="迷你长条模式" width="72%">
+  <img src="docs/ui-mini.png" alt="迷你长条模式" width="72%">
 </p>
 
 > 原生玻璃会实时采样组件背后的窗口内容。背后是照片或壁纸时会显示被虚化的颜色；背后是白色窗口时偏白，这是系统玻璃的真实行为。
 
-## 🚀 macOS 安装
+## 🚀 安装
 
 ### 直接使用
 
@@ -98,7 +96,7 @@
 - Apple Music 和/或 网易云音乐
 - 原生 Liquid Glass 需要 macOS 26+；旧系统会自动使用回退玻璃效果
 
-## 🎮 macOS 使用
+## 🎮 使用
 
 | 操作 | 方式 |
 | --- | --- |
@@ -140,12 +138,12 @@
 - 歌词缓存：`~/Library/Caches/MiniPlayer/lyrics`，上限约 **32 MB**。
 - 启动时自动清理 **30 天**前的缓存；超过大小上限时从最旧文件开始清理。
 
-## 🛠️ macOS 从源码构建
+## 🛠️ 从源码构建
 
 要求 Xcode 15+、Swift 5.9+。
 
 ```bash
-cd macos
+cd MiniPlayer
 ./scripts/build.sh
 ```
 
@@ -155,26 +153,6 @@ cd macos
 - `dist/MiniPlayer.zip`
 
 App 会优先使用本机可用的 Apple Development 证书签名；没有证书时回退 ad-hoc 签名。项目依赖系统框架，无第三方运行时依赖。
-
-## 🪟 Windows 版
-
-Windows 工程位于 `windows/`，当前**先只支持网易云音乐**。
-
-- 通过 Windows SMTC 读取网易云的歌曲、歌手、封面、进度和播放状态；
-- 播放 / 暂停、上一首、下一首、进度跳转；
-- 完整 / 迷你悬浮卡片、桌面单行歌词、系统托盘；
-- 使用 DWM Acrylic + 圆角 + 半透明渐变和内层高光模拟玻璃质感。参考了 [pratikone/liquid-glass-WinUI](https://github.com/pratikone/liquid-glass-WinUI) 的玻璃分层思路；完整 Win2D 折射需要 WinUI 3 host，当前 Avalonia 版是近似实现。
-
-在 `windows/` 下构建：
-
-```bash
-dotnet build -c Release
-dotnet publish -c Release -r win-x64 --self-contained true -o publish/win-x64
-```
-
-当前 Windows 版是实验性移植，尚未在 Windows 机器上运行验证；使用网易云客户端时需确保它向 Windows 暴露 SMTC 媒体会话。
-
-Windows 安装包：[MiniPlayerWin-win-x64.zip](https://github.com/Kensh1n-Ch3n/MiniPlayer/releases/latest/download/MiniPlayerWin-win-x64.zip)
 
 ## ❓ 常见问题
 
@@ -201,7 +179,7 @@ Apple Music 的脚本接口不暴露逐行时间轴；如果本机没有官方 T
 如果音乐小窗对你有帮助，欢迎请我喝杯茶。你的支持会让它继续更新。
 
 <p align="center">
-  <img src="macos/docs/alipay-qr.jpg" alt="支付宝收款码" width="300">
+  <img src="docs/alipay-qr.jpg" alt="支付宝收款码" width="300">
 </p>
 
 <p align="center">
